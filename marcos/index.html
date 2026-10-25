@@ -1783,6 +1783,13 @@ var CROSS_KEY = 'marcos_cross_v1';   /* guarda quem lidera na projecao e a hora 
 var crossEstado = null;
 var novidadeVirada = false;          /* true apenas no ciclo em que a lideranca virou */
 
+/** margem da CONTAGEM atual (Flavio - Lula, em pontos). 0 = sem dado. */
+function margemContagem(){
+  var n = S.nat;
+  if (!n || !n.cands || !n.cands['13'] || !n.cands['22'] || !(n.st > 0)) return 0;
+  return n.cands['22'].pvap - n.cands['13'].pvap;
+}
+
 function projLoad(){
   try { projHist = JSON.parse(localStorage.getItem(PROJ_KEY) || '[]') || []; } catch(e){ projHist = []; }
 }
@@ -1853,18 +1860,21 @@ function projRender(){
   try { crossEstado = JSON.parse(localStorage.getItem(CROSS_KEY) || 'null'); } catch(e){ crossEstado = null; }
   var faixa = $('pjCross');
   if (!crossEstado){
-    /* primeira vez: procura no HISTORICO a ultima vez que a margem mudou
-       de sinal. Se achou, a virada e real e datada — mostra com a hora. */
+    /* primeira vez neste navegador: procura no HISTORICO a ultima vez em que
+       a margem trocou de sinal — se achou, a virada e datada de verdade. */
     var virada = null;
     for (var i = projHist.length - 1; i > 0; i--){
       var a = projHist[i-1].m, c = projHist[i].m;
-      if ((a === 0) !== (c === 0) && a !== 0 && c !== 0 && (a > 0) !== (c > 0)){
-        virada = projHist[i];
-        break;
-      }
+      if (a !== 0 && c !== 0 && (a > 0) !== (c > 0)){ virada = projHist[i]; break; }
     }
     if (virada && liderAgora){
       crossEstado = { lider: liderAgora, quando: virada.t, margem: p.marg };
+    } else if (liderAgora && margemContagem() !== 0 &&
+               (margemContagem() > 0) !== (liderAgora === '22')){
+      /* sem historico, mas a projecao aponta um lado e a CONTAGEM ainda
+         aponta o outro: a virada aconteceu, so nao sabemos a hora exata.
+         Nesse caso mostramos sem horario (nunca inventamos a hora). */
+      crossEstado = { lider: liderAgora, quando: -1, margem: p.marg };
     } else {
       crossEstado = { lider: liderAgora, quando: 0, margem: p.marg };
     }
@@ -1880,10 +1890,14 @@ function projRender(){
   }
   if (faixa && crossEstado && crossEstado.quando && crossEstado.lider){
     var quem = crossEstado.lider === '22' ? 'Flávio' : 'Lula';
-    var quando = new Date(crossEstado.quando);
-    var hh = String(quando.getHours()).padStart(2,'0') + ':' + String(quando.getMinutes()).padStart(2,'0');
     $('pjCrossWho').textContent = quem;
-    $('pjCrossWhen').textContent = 'assumiu a liderança na projeção às ' + hh;
+    if (crossEstado.quando > 0){
+      var quando = new Date(crossEstado.quando);
+      var hh = String(quando.getHours()).padStart(2,'0') + ':' + String(quando.getMinutes()).padStart(2,'0');
+      $('pjCrossWhen').textContent = 'assumiu a liderança na projeção às ' + hh;
+    } else {
+      $('pjCrossWhen').textContent = 'virou a liderança na projeção';
+    }
     $('pjCrossVal').textContent = (p.marg >= 0 ? '+' : '−') + F1(Math.abs(p.marg)) + ' pts';
     faixa.hidden = false;
   } else if (faixa){
