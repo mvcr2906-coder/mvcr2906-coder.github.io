@@ -495,11 +495,17 @@
       height:calc(100vh - 196px);
       display:grid;
       grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);
-      grid-template-rows:auto auto auto 1fr;
+      grid-template-rows:auto auto auto 1fr auto;
       grid-template-areas:"hero ufs" "prog ufs" "totals ufs" "footer footer";
       gap:0 26px;padding:10px 26px 0;align-content:start;
     }
-    .hero{grid-area:hero;flex-direction:row;gap:10px;margin-top:0}
+    .hero{
+      grid-area:hero;margin-top:0;gap:8px 10px;
+      display:grid;grid-template-columns:1fr 1fr;
+      grid-template-areas:"cl cf" "adv adv";
+    }
+    #cardL{grid-area:cl}
+    #cardF{grid-area:cf}
     .cand{flex:1;padding:14px 16px 13px;border-radius:14px}
     .votes{font-size:42px}
     .pct{font-size:24px}
@@ -507,10 +513,17 @@
     .who b{font-size:15px}.who span{font-size:9px}
     .ct .av{width:38px;height:38px;font-size:16px}
     .bar{height:8px;margin-top:9px}
-    .adv{margin-top:8px;padding:9px 13px}
-    .app{font-size:34px}
-    .al{font-size:9px}
-    .av2{font-size:10px}
+    /* vantagem: faixa compacta de uma linha, logo abaixo dos candidatos */
+    .adv{
+      grid-area:adv;margin-top:0;padding:6px 13px;border-radius:10px;
+      display:flex;align-items:center;gap:11px;
+    }
+    .al{font-size:8px;letter-spacing:.16em;flex:0 0 auto}
+    .am{display:flex;align-items:baseline;gap:7px;margin-top:0;flex:0 0 auto}
+    .app{font-size:22px;line-height:1}
+    .app em{font-size:8.5px;letter-spacing:.08em}
+    .aw{font-size:9px;padding-bottom:0;letter-spacing:.09em}
+    .av2{margin-top:0;margin-left:auto;font-size:9.5px;white-space:nowrap}
 
     .card{grid-area:prog;margin-top:10px;padding:11px 16px}
     .card .ch{gap:10px}
@@ -570,7 +583,7 @@
     .nw-s{font-size:9.5px}
     .nw-live{font-size:9px;padding:4px 8px;margin-right:10px}
     .nw-tabs button{font-size:9px;padding:5px 9px}
-    body.hasnews main.wrap{height:calc(100vh - 246px)}
+    body.hasnews main.wrap{height:calc(100vh - 268px)}
     body.hasnews #tvctl{bottom:60px}
   }
   @media (min-width:1500px){
@@ -578,7 +591,7 @@
     .votes{font-size:50px}
     .pct{font-size:27px}
     .big{font-size:34px}
-    .app{font-size:38px}
+    .app{font-size:25px}
     #ufs .uf{padding:6px 9px 7px}
     .mini .v{font-size:11px}
   }
