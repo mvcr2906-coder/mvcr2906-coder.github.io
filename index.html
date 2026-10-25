@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<!-- =====================================================================
+     APURAÇÃO PRESIDENTE — 2º TURNO 2026 (25/10/2026)
+     Página de acompanhamento OCHURCH — arquivo único, sem framework,
+     sem backend. Consome direto os arquivos públicos do TSE.
+
+     FONTE OFICIAL (nada é inventado; HTTP 404 = arquivo ainda não gerado
+     e é simplesmente ignorado):
+       BASE   https://resultados.tse.jus.br/oficial/ele2026
+       NAC    {BASE}/6258/dados/br/br-c0001-e006258-u.json      (Brasil, cargo 0001)
+       ABR    {BASE}/6258/dados/br/br-e006258-ab.json            (progresso por UF)
+       UF     {BASE}/6258/dados/{uf}/{uf}-c0001-e006258-u.json   (27 UFs)
+
+     CAMPOS (conferidos contra a especificação EA20 do TSE e contra
+     arquivos reais já publicados):
+       s.ts   total de seções da abrangência
+       s.st   seções totalizadas
+       s.pst  % de seções totalizadas        s.snt  seções não totalizadas
+       v.vv   votos válidos                  v.tv   total de votos
+       v.vb   votos brancos                  v.tvn  total de nulos (vn + vnt)
+       e.te   eleitorado                     e.c    comparecimento
+       e.a    abstenções                     e.pa   % de abstenção
+       cand.vap   votos do candidato         cand.pvap  % dos votos válidos
+       cand.e     's' = eleito               cand.st    situação
+       d.dg + d.hg = data/hora de geração do arquivo no TSE
+
+     POLLING: nacional + progresso a cada 15s; as 27 UFs em rodízio,
+     UMA por ciclo (~2,2s), sempre em sequência e nunca em paralelo.
+     --------------------------------------------------------------------- -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="APURAÇÃO">
+<meta name="theme-color" content="#07070A">
+<meta name="color-scheme" content="dark">
+<title>APURAÇÃO PRESIDENTE — OCHURCH</title>
+<style>
+  /* ---------------------------------------------------------------
+     IDENTIDADE OCHURCH: preto profundo, tipografia branca, anel
+     degradê âmbar -> laranja -> rosa (mesmo do avatar @ochurch.oficial)
+     --------------------------------------------------------------- */
+  :root{
+    --bg:#07070A;
+    --bg-2:#0B0B10;
+    --card:#101014;
+    --card-2:#15151B;
+    --line:rgba(255,255,255,.085);
+    --line-2:rgba(255,255,255,.16);
+    --txt:#F6F6F8;
+    --txt-2:#C9C9D2;
+    --mut:#8A8A96;
+    --mut-2:#5F5F6B;
+    --g1:#FFC24A;   /* âmbar  */
+    --g2:#FF7A3D;   /* laranja */
+    --g3:#E23E7A;   /* rosa   */
+    --grad:linear-gradient(90deg,var(--g1),var(--g2),var(--g3));
+    --lula:#78849E;
+    --r:18px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:
+      radial-gradient(900px 480px at 78% -12%, rgba(226,62,122,.14), transparent 62%),
+      radial-gradient(760px 420px at 8% -6%, rgba(255,194,74,.10), transparent 60%),
+      var(--bg);
+    color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Inter","SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+    font-size:15px;line-height:1.35;
+    padding-bottom:calc(28px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"lnum" 1}
+  .wrap{width:100%;max-width:480px;margin:0 auto;padding:0 16px}
+
+  /* ============ TOPO FIXO ============ */
+  header#top{
+    position:sticky;top:0;z-index:50;
+    background:linear-gradient(180deg,rgba(7,7,10,.97) 0%,rgba(7,7,10,.93) 72%,rgba(7,7,10,.72) 100%);
+    backdrop-filter:saturate(160%) blur(18px);
+    -webkit-backdrop-filter:saturate(160%) blur(18px);
+    border-bottom:1px solid var(--line);
+    padding-top:calc(env(safe-area-inset-top) + 10px);
+  }
+  .top-row{display:flex;align-items:center;gap:10px;padding:0 16px 8px}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+  .oc{width:38px;height:38px;flex:0 0 38px;display:block}
+  .brand-txt{display:flex;flex-direction:column;min-width:0;line-height:1.05}
+  .brand-txt b{font-size:13px;letter-spacing:.22em;font-weight:800;color:#fff}
+  .brand-txt span{
+    font-size:9.5px;letter-spacing:.19em;font-weight:700;margin-top:3px;
+    color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  /* selo AO VIVO */
+  .live{
+    display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+    padding:7px 11px;border-radius:999px;
+    font-size:10px;font-weight:800;letter-spacing:.16em;
+    color:#0A0A0C;background:var(--grad);
+    box-shadow:0 0 0 1px rgba(255,255,255,.12) inset, 0 6px 22px -10px rgba(226,62,122,.9);
+    animation:livePulse 2.1s ease-in-out infinite;
+  }
+  .live i{width:6px;height:6px;border-radius:50%;background:#0A0A0C;display:block;animation:dotPulse 1.6s ease-in-out infinite}
+  .live.off{background:#1B1B22;color:var(--mut-2);animation:none;box-shadow:none}
+  .live.off i{background:var(--mut-2);animation:none}
+  .live.done{background:#F3F3F5;color:#0A0A0C;animation:none}
+  @keyframes livePulse{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 0 0 0 rgba(255,194,74,.42)}55%{box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 0 0 7px rgba(255,194,74,0)}}
+  @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+  .top-sub{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 16px 9px;font-size:10px;letter-spacing:.1em;color:var(--mut-2);text-transform:uppercase}
+  .top-sub b{color:var(--txt-2);font-weight:700;letter-spacing:.08em}
+
+  /* aviso discreto de conexão */
+  #offline{
+    display:none;margin:0;padding:7px 16px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:#FFD9A8;background:linear-gradient(90deg,rgba(255,122,61,.16),rgba(226,62,122,.10));
+    border-bottom:1px solid rgba(255,122,61,.22);
+  }
+  #offline.on{display:block}
+
+  /* ============ VERSÍCULO / CABEÇALHO DA IGREJA ============ */
+  .verse{
+    margin:18px 0 14px;padding:15px 16px 14px;border-radius:var(--r);
+    background:linear-gradient(160deg,rgba(255,194,74,.10),rgba(226,62,122,.07) 55%,rgba(255,255,255,.02));
+    border:1px solid var(--line);
+    position:relative;overflow:hidden;
+  }
+  .verse::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--grad)}
+  .verse p{margin:0 0 8px;padding-left:11px;font-size:13.5px;line-height:1.5;color:#EDEDF2;font-weight:500}
+  .verse cite{padding-left:11px;font-style:normal;font-size:10px;letter-spacing:.2em;font-weight:800;text-transform:uppercase;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .credo{
+    margin:12px 0 0;padding:11px 0 0;border-top:1px solid var(--line);
+    text-align:center;font-size:11px;letter-spacing:.34em;font-weight:800;text-transform:uppercase;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+
+  /* ============ HERO CANDIDATOS ============ */
+  .hero{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+  .cand{
+    position:relative;border-radius:var(--r);padding:14px 15px 13px;
+    background:linear-gradient(180deg,var(--card-2),var(--card));
+    border:1px solid var(--line);
+    transition:border-color .6s ease,box-shadow .6s ease;
+  }
+  .cand.lead-fla{border-color:rgba(255,122,61,.42);box-shadow:0 0 0 1px rgba(255,194,74,.10),0 18px 40px -30px rgba(226,62,122,.9)}
+  .cand-top{display:flex;align-items:center;gap:9px}
+  .avatar{
+    width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;
+    font-size:11px;font-weight:800;letter-spacing:.02em;color:#fff;background:#1E1E26;border:1px solid var(--line-2)
+  }
+  .badge-lula{background:#F3F3F5}
+  .cand.fla .avatar{background:linear-gradient(150deg,rgba(255,194,74,.22),rgba(226,62,122,.22));border-color:rgba(255,194,74,.42)}
+  .who{flex:1;min-width:0}
+  .who b{display:block;font-size:14.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .who span{display:block;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-top:2px;font-weight:700}
+  .badge-eleito{
+    font-size:8.5px;letter-spacing:.14em;font-weight:800;text-transform:uppercase;
+    padding:4px 7px;border-radius:6px;color:#0A0A0C;background:var(--grad);white-space:nowrap
+  }
+  .cand-nums{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:11px}
+  .votes{font-size:31px;line-height:1;font-weight:800;letter-spacing:-.02em}
+  .votes.small{font-size:26px}
+  .votes .unit{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--mut-2);display:block;margin-top:5px}
+  .pct-box{text-align:right;flex:0 0 auto}
+  .pct{font-size:22px;font-weight:800;line-height:1;letter-spacing:-.01em}
+  .pct.fla{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .pct-box small{display:block;font-size:9px;letter-spacing:.14em;color:var(--mut-2);text-transform:uppercase;margin-top:4px;font-weight:700}
+  .bar{height:7px;border-radius:99px;background:rgba(255,255,255,.07);margin-top:12px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:99px;width:0%;transition:width .6s cubic-bezier(.22,.8,.24,1)}
+  .cand.lula .bar > i{background:var(--lula)}
+  .cand.fla  .bar > i{background:var(--grad)}
+
+  /* enquanto aguarda, nada de zero na tela */
+  body.waiting .hero,body.waiting #adv,body.waiting .totals{display:none}
+  body.waiting #ufsWrap{display:none}
+  #waitUfs{
+    display:none;margin-top:10px;padding:20px 16px;border-radius:14px;text-align:center;
+    border:1px dashed rgba(255,255,255,.12);font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--mut-2);line-height:1.7
+  }
+  body.waiting #waitUfs{display:block}
+
+  /* ============ VANTAGEM ============ */
+  .adv{
+    margin-top:12px;border-radius:var(--r);padding:15px 16px;
+    background:linear-gradient(135deg,rgba(255,194,74,.13),rgba(226,62,122,.09));
+    border:1px solid rgba(255,194,74,.26);
+  }
+  .adv-label{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  .adv-main{display:flex;align-items:flex-end;gap:11px;margin-top:8px}
+  .adv-pp{font-size:38px;line-height:.92;font-weight:800;letter-spacing:-.03em;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .adv-pp em{font-size:14px;font-style:normal;letter-spacing:.06em;font-weight:800;-webkit-text-fill-color:var(--txt-2)}
+  .adv-who{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-2);font-weight:800;padding-bottom:4px}
+  .adv-votes{margin-top:7px;font-size:12px;color:var(--mut);letter-spacing:.02em}
+  .adv-votes b{color:var(--txt);font-weight:800}
+
+  /* ============ PROGRESSO ============ */
+  .card{
+    margin-top:12px;border-radius:var(--r);padding:15px 16px;
+    background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--line)
+  }
+  .card-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .card-h h2{margin:0;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  .card-h .big{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .big.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .prog{height:9px;border-radius:99px;background:rgba(255,255,255,.07);margin-top:11px;overflow:hidden;position:relative}
+  .prog > i{display:block;height:100%;width:0%;border-radius:99px;background:var(--grad);transition:width .6s cubic-bezier(.22,.8,.24,1)}
+  .prog-meta{display:flex;justify-content:space-between;gap:10px;margin-top:9px;font-size:10.5px;letter-spacing:.06em;color:var(--mut);text-transform:uppercase}
+  .prog-meta b{color:var(--txt);font-weight:800}
+
+  /* ============ AGUARDANDO ============ */
+  #waiting{
+    display:none;margin-top:12px;border-radius:var(--r);padding:22px 18px;text-align:center;
+    background:linear-gradient(180deg,var(--card-2),var(--card));border:1px dashed rgba(255,255,255,.14)
+  }
+  #waiting.on{display:block}
+  #waiting h2{margin:0;font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--txt)}
+  #waiting p{margin:8px 0 0;font-size:11.5px;color:var(--mut);letter-spacing:.05em;line-height:1.5}
+  .dots{display:flex;justify-content:center;gap:5px;margin-bottom:13px}
+  .dots i{width:5px;height:5px;border-radius:50%;background:var(--g1);opacity:.3;animation:blink 1.5s infinite}
+  .dots i:nth-child(2){background:var(--g2);animation-delay:.22s}
+  .dots i:nth-child(3){background:var(--g3);animation-delay:.44s}
+  @keyframes blink{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
+
+  /* ============ LISTA DE ESTADOS ============ */
+  .sec{margin-top:22px}
+  .sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .sec-h h2{margin:0;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  .sec-h span{font-size:10px;letter-spacing:.1em;color:var(--mut-2);text-transform:uppercase}
+  .sort{display:flex;gap:6px;margin-bottom:12px}
+  .sort button{
+    flex:1;min-height:44px;padding:0 8px;border-radius:12px;cursor:pointer;
+    background:rgba(255,255,255,.045);border:1px solid var(--line);color:var(--txt-2);
+    font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;
+    transition:background .25s,color .25s,border-color .25s;
+    font-family:inherit;-webkit-appearance:none;appearance:none
+  }
+  .sort button[aria-pressed="true"]{color:#0A0A0C;background:var(--grad);border-color:transparent}
+
+  ul#ufs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  li.uf{
+    border-radius:14px;padding:11px 13px;
+    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+    border:1px solid var(--line);
+  }
+  .uf-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .uf-id{display:flex;align-items:baseline;gap:7px;min-width:0}
+  .uf-sigla{font-size:14px;font-weight:800;letter-spacing:.1em}
+  .uf-nm{font-size:9px;letter-spacing:.13em;color:var(--mut-2);text-transform:uppercase;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .uf-pct{font-size:12.5px;font-weight:800;color:var(--txt)}
+  .uf-pct.pend{color:var(--mut-2);font-weight:700}
+  .uf-bar{display:flex;height:5px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.06);margin:8px 0 9px}
+  .uf-bar i{display:block;height:100%;width:0;transition:width .6s cubic-bezier(.22,.8,.24,1)}
+  .uf-bar .b13{background:var(--lula)}
+  .uf-bar .b22{background:var(--grad)}
+  .uf-row{display:flex;gap:8px}
+  .mini{flex:1;min-width:0}
+  .mini.right{text-align:right}
+  .mini .nm{display:block;font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut-2);font-weight:800}
+  .mini .vv{display:flex;align-items:baseline;gap:6px;margin-top:3px}
+  .mini.right .vv{justify-content:flex-end}
+  .mini .v{font-size:13px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+  .mini .p{font-size:10.5px;font-weight:700;color:var(--mut)}
+  .mini.win .p{color:var(--txt)}
+  .mini.win .nm{color:var(--txt-2)}
+  .empty{padding:22px 0;text-align:center;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut-2)}
+
+  /* ============ RODAPÉ / TOTAIS ============ */
+  .totals{margin-top:22px;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;background:var(--card)}
+  .totals h2{margin:0;padding:14px 16px 10px;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  .t-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+  .t-cell{background:var(--card);padding:12px 14px 13px}
+  .t-cell .k{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut-2);font-weight:800}
+  .t-cell .v{font-size:17px;font-weight:800;margin-top:5px;letter-spacing:-.01em}
+  .t-cell .d{font-size:10px;color:var(--mut);margin-top:2px}
+  footer{margin-top:20px;text-align:center}
+  footer .f1{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut-2);line-height:1.9}
+  footer .f2{margin-top:10px;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:#4A4A54;font-weight:700}
+  footer .ring{width:26px;height:26px;margin:14px auto 0;opacity:.75}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ============================ TOPO FIXO ============================ -->
+<header id="top">
+  <div class="top-row">
+    <div class="brand">
+      <!-- logo OC: anel degradê da OCHURCH + letras brancas -->
+      <svg class="oc" viewBox="0 0 100 100" aria-label="OCHURCH" role="img">
+        <defs>
+          <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#FFC24A"/>
+            <stop offset="52%" stop-color="#FF7A3D"/>
+            <stop offset="100%" stop-color="#E23E7A"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="46" fill="#000"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="url(#ring)" stroke-width="3"/>
+        <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+              font-family="-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif"
+              font-size="40" font-weight="800" letter-spacing="-2" fill="#fff">OC</text>
+      </svg>
+      <div class="brand-txt">
+        <b>OCHURCH</b>
+        <span>APURAÇÃO · 2º TURNO 2026</span>
+      </div>
+    </div>
+    <div class="live" id="liveBadge"><i></i><span id="liveTxt">AO VIVO</span></div>
+  </div>
+  <div class="top-sub">
+    <span>ÚLTIMA ATUALIZAÇÃO: <b id="upd">—</b></span>
+    <span>TSE <b id="tseTime">—</b></span>
+  </div>
+  <p id="offline">Sem conexão — exibindo a última atualização salva</p>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================== VERSÍCULO ===================== -->
+  <section class="verse" aria-label="Versículo">
+    <p>“Bem-aventurada é a nação cujo Deus é o Senhor, e o povo que ele escolheu para a sua herança.”</p>
+    <cite>Salmos 33:12</cite>
+    <div class="credo">O Brasil é de Jesus</div>
+  </section>
+
+  <!-- ===================== HERO / CANDIDATOS ===================== -->
+  <section class="hero" aria-label="Resultado nacional">
+    <article class="cand lula" id="card-lula">
+      <div class="cand-top">
+        <div class="avatar">13</div>
+        <div class="who">
+          <b>Lula</b>
+          <span>PT · Federação Brasil da Esperança</span>
+        </div>
+        <span class="badge-eleito badge-lula" id="lula-eleito" hidden>Eleito</span>
+      </div>
+      <div class="cand-nums">
+        <div>
+          <div class="votes num" id="lula-votes">—</div>
+          <span class="unit">VOTOS</span>
+        </div>
+        <div class="pct-box">
+          <div class="pct num" id="lula-pct">—</div>
+          <small>Votos válidos</small>
+        </div>
+      </div>
+      <div class="bar"><i id="lula-bar"></i></div>
+    </article>
+
+    <article class="cand fla" id="card-fla">
+      <div class="cand-top">
+        <div class="avatar">22</div>
+        <div class="who">
+          <b>Flávio Bolsonaro</b>
+          <span>PL · Partido Liberal</span>
+        </div>
+        <span class="badge-eleito" id="fla-eleito" hidden>Eleito</span>
+      </div>
+      <div class="cand-nums">
+        <div>
+          <div class="votes num" id="fla-votes">—</div>
+          <span class="unit">VOTOS</span>
+        </div>
+        <div class="pct-box">
+          <div class="pct fla num" id="fla-pct">—</div>
+          <small>Votos válidos</small>
+        </div>
+      </div>
+      <div class="bar"><i id="fla-bar"></i></div>
+    </article>
+
+    <!-- vantagem -->
+    <div class="adv" id="adv" hidden>
+      <div class="adv-label" id="adv-label">Vantagem</div>
+      <div class="adv-main">
+        <div class="adv-pp num"><span id="adv-pp">—</span> <em>PONTOS</em></div>
+        <div class="adv-who" id="adv-who"></div>
+      </div>
+      <div class="adv-votes">Diferença de <b id="adv-votes">—</b> votos</div>
+    </div>
+  </section>
+
+  <!-- ===================== AGUARDANDO ===================== -->
+  <section id="waiting" aria-live="polite">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <h2>AGUARDANDO INÍCIO DA TOTALIZAÇÃO</h2>
+    <p id="waitMsg">A divulgação começa a partir das 17h (horário de Brasília).<br>Esta página atualiza sozinha.</p>
+  </section>
+
+  <!-- ===================== PROGRESSO ===================== -->
+  <section class="card" aria-label="Progresso da apuração">
+    <div class="card-h">
+      <h2>Seções totalizadas</h2>
+      <div class="big grad num" id="prog-big">—</div>
+    </div>
+    <div class="prog"><i id="prog-bar"></i></div>
+    <div class="prog-meta">
+      <span><b id="prog-done">—</b> de <b id="prog-total">—</b></span>
+      <span>Faltam <b id="prog-left">—</b></span>
+    </div>
+  </section>
+
+  <!-- ===================== ESTADOS ===================== -->
+  <section class="sec" aria-label="Apuração por estado">
+    <div class="sec-h">
+      <h2>Apuração por estado</h2>
+      <span id="ufs-count">27 UFs</span>
+    </div>
+    <div id="ufsWrap">
+    <div class="sort" role="group" aria-label="Ordenar estados">
+      <button type="button" data-sort="pct" aria-pressed="true">% apurado</button>
+      <button type="button" data-sort="az" aria-pressed="false">A–Z</button>
+      <button type="button" data-sort="adv" aria-pressed="false">Vantagem</button>
+    </div>
+    <ul id="ufs"></ul>
+    </div>
+    <div id="waitUfs">A apuração por estado aparece aqui<br>assim que o TSE publicar os boletins</div>
+  </section>
+
+  <!-- ===================== TOTAIS ===================== -->
+  <section class="totals" aria-label="Totais nacionais">
+    <h2>Brasil — totais nacionais</h2>
+    <div class="t-grid">
+      <div class="t-cell"><div class="k">Brancos</div><div class="v num" id="t-brancos">—</div><div class="d num" id="t-brancos-p"></div></div>
+      <div class="t-cell"><div class="k">Nulos</div><div class="v num" id="t-nulos">—</div><div class="d num" id="t-nulos-p"></div></div>
+      <div class="t-cell"><div class="k">Abstenção</div><div class="v num" id="t-abst">—</div><div class="d num" id="t-abst-p"></div></div>
+      <div class="t-cell"><div class="k">Comparecimento</div><div class="v num" id="t-comp">—</div><div class="d num" id="t-comp-p"></div></div>
+      <div class="t-cell" style="grid-column:1 / -1">
+        <div class="k">Total de votos computados</div>
+        <div class="v num" id="t-tv">—</div>
+        <div class="d num" id="t-eleitorado"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="f1">Fonte oficial: Tribunal Superior Eleitoral<br>resultados.tse.jus.br · Eleição 6258 · Cargo 0001</div>
+    <div class="f2">Página independente de acompanhamento · OCHURCH</div>
+    <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="ring2" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFC24A"/><stop offset="52%" stop-color="#FF7A3D"/><stop offset="100%" stop-color="#E23E7A"/>
+      </linearGradient></defs>
+      <circle cx="50" cy="50" r="44" fill="none" stroke="url(#ring2)" stroke-width="5"/>
+    </svg>
+  </footer>
+</main>
+
+<script>
+/* =====================================================================
+   1. CONFIGURAÇÃO
+   ===================================================================== */
+const BASE = 'https://resultados.tse.jus.br/oficial/ele2026';
+const ELEICAO = '6258';                 // Eleição Geral Federal 2026
+const CARGO = '0001';                   // Presidente
+const E = 'e' + ELEICAO.padStart(6, '0');   // -> e006258
+const URL_NAC = `${BASE}/${ELEICAO}/dados/br/br-c${CARGO}-${E}-u.json`;
+const URL_ABR = `${BASE}/${ELEICAO}/dados/br/br-${E}-ab.json`;
+const urlUF = uf => `${BASE}/${ELEICAO}/dados/${uf}/${uf}-c${CARGO}-${E}-u.json`;
+
+/* As 27 unidades da federação (26 estados + DF). A lista de referência
+   do pedido citava 26 siglas e omitia AL — Alagoas entra aqui para que
+   a soma bata com o total nacional. */
+const UFS = ['ac','al','am','ap','ba','ce','df','es','go','ma','mg','ms','mt',
+             'pa','pb','pe','pi','pr','rj','rn','ro','rr','rs','sc','se','sp','to'];
+const NOMES = {ac:'Acre',al:'Alagoas',am:'Amazonas',ap:'Amapá',ba:'Bahia',ce:'Ceará',
+  df:'Distrito Federal',es:'Espírito Santo',go:'Goiás',ma:'Maranhão',mg:'Minas Gerais',
+  ms:'Mato Grosso do Sul',mt:'Mato Grosso',pa:'Pará',pb:'Paraíba',pe:'Pernambuco',
+  pi:'Piauí',pr:'Paraná',rj:'Rio de Janeiro',rn:'Rio Grande do Norte',ro:'Rondônia',
+  rr:'Roraima',rs:'Rio Grande do Sul',sc:'Santa Catarina',se:'Sergipe',sp:'São Paulo',
+  to:'Tocantins'};
+
+const N_LULA = '13', N_FLA = '22';
+const LS_KEY = 'ochurch_apuracao_2026_v1';
+
+/* =====================================================================
+   2. ESTADO DA APLICAÇÃO
+   ===================================================================== */
+const S = {
+  nat: null,          // último arquivo nacional interpretado
+  abr: null,          // progresso por UF (arquivo ab)
+  ufs: {},            // { go: {...,at} }
+  fetchedAt: 0,       // quando o navegador conseguiu atualizar
+  frozen: false,      // apuração encerrada (100%)
+  offline: false,
+  sort: 'pct',
+  idx: 0,
+  natBusy: false,
+  ufBusy: false
+};
+
+/* =====================================================================
+   3. UTILITÁRIOS
+   ===================================================================== */
+const nf0 = new Intl.NumberFormat('pt-BR', {maximumFractionDigits: 0});
+const nf1 = new Intl.NumberFormat('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+const nf2 = new Intl.NumberFormat('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const $ = id => document.getElementById(id);
+
+/**
+ * Converte valores numéricos do TSE em número.
+ * O TSE manda inteiros SEM separador ("499248") e decimais com VÍRGULA ("86,05").
+ * A função aceita também ponto como decimal (defensivo) sem confundir com
+ * separador de milhar — "46.50" = 46,5 e "1.234" = 1234.
+ * Vazio ou inválido => 0. Nunca inventa valor.
+ */
+function n(v){
+  if (v === null || v === undefined || v === '') return 0;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  let s = String(v).trim().replace(/\s/g, '');
+  if (!s) return 0;
+  if (s.includes(',')){                       // vírgula decimal: ponto é milhar
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes('.')){
+    // só ponto: milhar puro (1.234 / 1.234.567) ou decimal (46.5 / 46.50)
+    s = /^-?\d{1,3}(\.\d{3})+$/.test(s) ? s.replace(/\./g, '') : s;
+  }
+  const x = parseFloat(s);
+  return Number.isFinite(x) ? x : 0;
+}
+const fmt0 = v => nf0.format(Math.round(v || 0));
+const fmt1 = v => nf1.format(v || 0);
+const fmt2 = v => nf2.format(v || 0);
+/** % de apuração: 2 casas enquanto é pequeno (0,04% não pode virar 0,0%) */
+const fmtPct = v => (v >= 10 ? fmt1(v) : fmt2(v));
+
+/** Hora de Brasília, independente do fuso do aparelho. */
+function horaBrasilia(){
+  try{
+    const p = new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date());
+    return {hhmm:p, hour:parseInt(p.slice(0,2),10)};
+  }catch(e){
+    const d = new Date(); return {hhmm: String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'), hour:d.getHours()};
+  }
+}
+
+/** fetch com timeout; devolve null em 404 (arquivo ainda não publicado). */
+async function getJSON(url, ms = 12000){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try{
+    const r = await fetch(url, {cache:'no-store', signal: ctrl.signal, headers:{'Accept':'application/json'}});
+    if (r.status === 404) return null;          // ainda não gerado -> ignorar
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+
+/* =====================================================================
+   4. INTERPRETAÇÃO DOS ARQUIVOS DO TSE (campos da especificação EA20)
+   ===================================================================== */
+function parseUnificado(d){
+  const s = d.s || {}, v = d.v || {}, e = d.e || {};
+  const out = {
+    ts: n(s.ts), st: n(s.st), pst: n(s.pstn || s.pst), snt: n(s.snt),
+    tv: n(v.tv), vv: n(v.vv), vb: n(v.vb), pvb: n(v.pvb),
+    tvn: n(v.tvn || v.vn), ptvn: n(v.tvn ? v.ptvn : v.pvn),
+    eleitorado: n(e.te), eleitoradoApur: n(e.est), comparecimento: n(e.c), pctComp: n(e.pc),
+    abstencoes: n(e.a), pctAbst: n(e.pa),
+    cands: {}, gerado: (d.dg || '') + (d.hg ? ' ' + d.hg : '')
+  };
+  const cargos = d.carg || [];
+  const cargo = cargos.find(c => String(c.cd) === '1') || cargos[0];
+  if (cargo){
+    (cargo.agr || []).forEach(agr => (agr.par || []).forEach(par => (par.cand || []).forEach(c => {
+      out.cands[String(c.n)] = {
+        n: String(c.n), nmu: c.nmu || c.nm || '', sg: (par && par.sg) || '',
+        vap: n(c.vap), pvap: n(c.pvap), eleito: c.e === 's', sit: c.st || ''
+      };
+    })));
+  }
+  return out;
+}
+
+/** Progresso por UF a partir do arquivo ab (uma leitura para as 27 UFs). */
+function parseAbr(d){
+  const map = {};
+  (d.abr || []).forEach(a => {
+    map[String(a.cdabr).toLowerCase()] = {
+      st: n(a.s && a.s.st), ts: n(a.s && a.s.ts),
+      pst: n((a.s && (a.s.pstn || a.s.pst)) || 0)
+    };
+  });
+  return map;
+}
+
+/* =====================================================================
+   5. PERSISTÊNCIA LOCAL (mostra resultado mesmo offline)
+   ===================================================================== */
+function saveCache(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      nat: S.nat, abr: S.abr, ufs: S.ufs, fetchedAt: S.fetchedAt, frozen: S.frozen
+    }));
+  }catch(e){ /* modo privado do Safari: segue sem cache */ }
+}
+function loadCache(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const c = JSON.parse(raw);
+    // valida o formato: cache antigo/incompatível é descartado em vez de quebrar a tela
+    if (!c || !c.nat || typeof c.nat !== 'object' || !c.nat.cands) return false;
+    S.nat = c.nat; S.abr = c.abr || null; S.ufs = c.ufs || {};
+    S.fetchedAt = c.fetchedAt || 0; S.frozen = !!c.frozen;
+    return true;
+  }catch(e){ return false; }
+}
+
+/* =====================================================================
+   6. RENDER — TOPO
+   ===================================================================== */
+let ticker = null;
+function renderTop(){
+  const live = $('liveBadge'), txt = $('liveTxt');
+  const nat = S.nat;
+  const done = nat && nat.pst >= 99.999 && nat.st > 0;
+  if (done || S.frozen){
+    live.className = 'live done'; txt.textContent = 'ENCERRADA';
+  } else if (S.offline){
+    live.className = 'live off'; txt.textContent = 'OFFLINE';
+  } else {
+    live.className = 'live'; txt.textContent = 'AO VIVO';
+  }
+  $('tseTime').textContent = nat && nat.gerado ? nat.gerado.trim() : '—';
+  $('offline').classList.toggle('on', S.offline);
+  updClock();
+}
+function updClock(){
+  const el = $('upd');
+  if (!S.fetchedAt){ el.textContent = '—'; return; }
+  const s = Math.max(0, Math.round((Date.now() - S.fetchedAt) / 1000));
+  el.textContent = s < 60 ? 'há ' + s + 's' : 'há ' + Math.floor(s / 60) + 'min';
+}
+setInterval(updClock, 1000);
+
+/* =====================================================================
+   7. RENDER — HERO, VANTAGEM, PROGRESSO, TOTAIS
+   ===================================================================== */
+const cur = {};   // valores atuais para animação
+function animNum(el, key, to, fmt, ms = 600){
+  const from = cur[key] === undefined ? to : cur[key];
+  cur[key] = to;
+  if (from === to){ el.textContent = fmt(to); return; }
+  const t0 = performance.now();
+  if (el._raf) cancelAnimationFrame(el._raf);
+  const step = now => {
+    const k = Math.min(1, (now - t0) / ms);
+    const e = 1 - Math.pow(1 - k, 3);            // easeOutCubic
+    el.textContent = fmt(from + (to - from) * e);
+    if (k < 1) el._raf = requestAnimationFrame(step);
+  };
+  el._raf = requestAnimationFrame(step);
+}
+
+function renderMain(){
+  const nat = S.nat;
+  if (!nat || !nat.cands) return;
+  nat.cands = nat.cands || {};
+
+  const lula = nat.cands[N_LULA] || {vap:0, pvap:0};
+  const fla  = nat.cands[N_FLA]  || {vap:0, pvap:0};
+
+  // % sempre relativo aos votos válidos: vem pronto do TSE (pvap).
+  animNum($('lula-votes'), 'lv', lula.vap, v => fmt0(v));
+  animNum($('fla-votes'),  'fv', fla.vap,  v => fmt0(v));
+  animNum($('lula-pct'),   'lp', lula.pvap, v => fmt1(v) + '%');
+  animNum($('fla-pct'),    'fp', fla.pvap,  v => fmt1(v) + '%');
+  $('lula-bar').style.width = Math.max(0, Math.min(100, lula.pvap)) + '%';
+  $('fla-bar').style.width  = Math.max(0, Math.min(100, fla.pvap))  + '%';
+
+  // destaque de quem lidera / eleito
+  const flaLead = fla.vap > lula.vap;
+  $('card-fla').classList.toggle('lead-fla', flaLead || fla.eleito);
+  const showEleito = nat.pst >= 99.999 && nat.st > 0;
+  $('fla-eleito').hidden = !(showEleito && (fla.eleito || flaLead));
+  $('lula-eleito').hidden = !(showEleito && !fla.eleito && !flaLead);
+
+  // vantagem
+  const diffV = Math.abs(fla.vap - lula.vap);
+  const diffP = Math.abs(fla.pvap - lula.pvap);
+  const hasVotes = lula.vap > 0 || fla.vap > 0;
+  $('adv').hidden = !hasVotes;
+  if (hasVotes){
+    animNum($('adv-pp'), 'ap', diffP, v => fmt2(v));
+    $('adv-who').textContent = flaLead ? 'Flávio Bolsonaro à frente' : 'Lula à frente';
+    animNum($('adv-votes'), 'av', diffV, v => fmt0(v));
+    $('adv-label').textContent = showEleito ? 'Resultado final — vantagem' : 'Vantagem';
+  }
+
+  // progresso geral
+  const pct = Math.max(0, Math.min(100, nat.pst));
+  $('prog-bar').style.width = pct + '%';
+  animNum($('prog-big'), 'pb', pct, v => fmtPct(v) + '%');
+  $('prog-done').textContent = fmt0(nat.st);
+  $('prog-total').textContent = fmt0(nat.ts);
+  $('prog-left').textContent = fmt0(Math.max(0, nat.snt));
+
+  // totais
+  const tv = nat.tv || (nat.vv + nat.vb + nat.tvn);
+  $('t-brancos').textContent = fmt0(nat.vb);
+  $('t-brancos-p').textContent = tv ? fmt2(nat.pvb) + '% dos votos' : '—';
+  $('t-nulos').textContent = fmt0(nat.tvn);
+  $('t-nulos-p').textContent = tv ? fmt2(nat.ptvn) + '% dos votos' : '—';
+  $('t-abst').textContent = fmt0(nat.abstencoes);
+  $('t-abst-p').textContent = nat.abstencoes ? fmt2(nat.pctAbst) + '% nas seções apuradas' : '—';
+  $('t-comp').textContent = fmt0(nat.comparecimento);
+  $('t-comp-p').textContent = nat.comparecimento ? fmt2(nat.pctComp) + '% nas seções apuradas' : '—';
+  $('t-tv').textContent = fmt0(tv);
+  $('t-eleitorado').textContent = nat.eleitorado
+    ? 'Válidos: ' + fmt0(nat.vv) + ' · eleitorado das seções apuradas: ' + fmt0(nat.eleitoradoApur || (nat.comparecimento + nat.abstencoes)) + ' de ' + fmt0(nat.eleitorado)
+    : '';
+
+  // estado de espera x apuração encerrada
+  const waiting = nat.st === 0 && pct < 99.999;
+  $('waiting').classList.toggle('on', waiting);
+  document.body.classList.toggle('waiting', waiting);
+  if (waiting){
+    const h = horaBrasilia().hour;
+    $('waitMsg').innerHTML = h < 17
+      ? 'A divulgação começa a partir das 17h (horário de Brasília).<br>Esta página atualiza sozinha.'
+      : 'Os primeiros boletins ainda não foram publicados pelo TSE.<br>Esta página atualiza sozinha a cada 15 segundos.';
+  }
+  if (pct >= 99.999 && !S.frozen){
+    S.frozen = true;                    // congela o resultado
+    clearInterval(timers.nat); clearInterval(timers.uf);
+    saveCache();
+  }
+  renderTop();
+}
+
+/* =====================================================================
+   8. RENDER — LISTA DE ESTADOS
+   ===================================================================== */
+const rows = {};   // go -> {li, ...refs}
+function buildRows(){
+  const ul = $('ufs');
+  ul.innerHTML = '';
+  UFS.forEach(uf => {
+    const li = document.createElement('li');
+    li.className = 'uf';
+    li.dataset.uf = uf;
+    li.innerHTML = `
+      <div class="uf-top">
+        <div class="uf-id"><span class="uf-sigla">${uf.toUpperCase()}</span><span class="uf-nm">${NOMES[uf]}</span></div>
+        <div class="uf-pct pend" data-r="pct">—</div>
+      </div>
+      <div class="uf-bar"><i class="b13" data-r="b13"></i><i class="b22" data-r="b22"></i></div>
+      <div class="uf-row">
+        <div class="mini" data-r="m13">
+          <span class="nm">Lula 13</span>
+          <span class="vv"><span class="v num" data-r="v13">—</span><span class="p num" data-r="p13"></span></span>
+        </div>
+        <div class="mini right" data-r="m22">
+          <span class="nm">Flávio 22</span>
+          <span class="vv"><span class="v num" data-r="v22">—</span><span class="p num" data-r="p22"></span></span>
+        </div>
+      </div>`;
+    const q = s => li.querySelector(`[data-r="${s}"]`);
+    rows[uf] = {li, pct:q('pct'), b13:q('b13'), b22:q('b22'), v13:q('v13'), p13:q('p13'),
+                v22:q('v22'), p22:q('p22'), m13:q('m13'), m22:q('m22')};
+    ul.appendChild(li);
+  });
+}
+
+function renderUFs(){
+  UFS.forEach(uf => {
+    const r = rows[uf]; if (!r) return;
+    const abr = S.abr && S.abr[uf];
+    const d = S.ufs[uf];
+    // % apurado: preferência para o arquivo da própria UF (mesma fonte dos votos)
+    const pst = d ? d.pst : (abr ? abr.pst : null);
+    const temDados = d && d.st > 0;
+
+    if (pst === null || pst === undefined || !(pst > 0)){
+      r.pct.textContent = '—'; r.pct.classList.add('pend');
+    } else {
+      r.pct.textContent = fmtPct(pst) + '%';
+      r.pct.classList.remove('pend');
+    }
+
+    const l = d && d.cands[N_LULA], f = d && d.cands[N_FLA];
+    if (temDados && l && f){
+      r.v13.textContent = fmt0(l.vap);
+      r.v22.textContent = fmt0(f.vap);
+      r.p13.textContent = fmt1(l.pvap) + '%';
+      r.p22.textContent = fmt1(f.pvap) + '%';
+      r.b13.style.width = Math.max(0, Math.min(100, l.pvap)) + '%';
+      r.b22.style.width = Math.max(0, Math.min(100, f.pvap)) + '%';
+      r.m13.classList.toggle('win', l.vap > f.vap);
+      r.m22.classList.toggle('win', f.vap > l.vap);
+    } else {
+      // sem arquivo da UF ainda (404) ou 0 seções: nada de número inventado
+      const espera = pst !== null && pst > 0 ? '—' : 'aguardando';
+      r.v13.textContent = '—'; r.v22.textContent = '—';
+      r.p13.textContent = ''; r.p22.textContent = '';
+      r.b13.style.width = '0%'; r.b22.style.width = '0%';
+      r.m13.classList.remove('win'); r.m22.classList.remove('win');
+      if (espera === 'aguardando'){ r.p13.textContent = ''; r.p22.textContent = ''; }
+    }
+  });
+  sortRows();
+}
+
+function sortRows(){
+  const ul = $('ufs');
+  const list = UFS.slice();
+  const val = uf => {
+    const d = S.ufs[uf], abr = S.abr && S.abr[uf];
+    return {
+      pct: d ? d.pst : (abr ? abr.pst : -1),
+      adv: d && d.cands[N_LULA] && d.cands[N_FLA] ? Math.abs(d.cands[N_FLA].pvap - d.cands[N_LULA].pvap) : -1
+    };
+  };
+  list.sort((a, b) => {
+    if (S.sort === 'az') return a.localeCompare(b);
+    if (S.sort === 'adv'){
+      const x = val(a).adv, y = val(b).adv;
+      if (y !== x) return y - x;
+      return a.localeCompare(b);
+    }
+    const x = val(a).pct, y = val(b).pct;
+    if (y !== x) return y - x;                 // % apurado desc
+    return a.localeCompare(b);
+  });
+  const frag = document.createDocumentFragment();
+  list.forEach(uf => frag.appendChild(rows[uf].li));
+  ul.appendChild(frag);
+}
+
+/* =====================================================================
+   9. COLETA — nacional a cada 15s, 1 UF por ciclo (em sequência)
+   ===================================================================== */
+const timers = {nat:null, uf:null};
+
+async function tickNacional(){
+  if (S.natBusy || S.frozen) return;
+  S.natBusy = true;
+  try{
+    const d = await getJSON(URL_NAC);
+    if (d){
+      S.nat = parseUnificado(d);
+      S.fetchedAt = Date.now();
+      S.offline = false;
+      saveCache(); renderMain();
+    }
+    // progresso por UF (arquivo único): mesma cadência, uma requisição
+    const a = await getJSON(URL_ABR);
+    if (a){
+      S.abr = parseAbr(a);
+      renderUFs(); saveCache();
+    }
+    if (!d && !a) throw new Error('sem resposta');
+  }catch(err){
+    S.offline = true;
+    renderTop();
+  }finally{
+    S.natBusy = false;
+  }
+}
+
+async function tickUF(){
+  if (S.ufBusy || S.frozen) return;
+  S.ufBusy = true;
+  const uf = UFS[S.idx % UFS.length];
+  S.idx++;
+  try{
+    const d = await getJSON(urlUF(uf));       // 404 => null => ignora
+    if (d){
+      const p = parseUnificado(d);
+      p.at = Date.now();
+      S.ufs[uf] = p;
+      S.offline = false;
+      saveCache(); renderUFs();
+    }
+  }catch(err){
+    /* erro isolado de uma UF não derruba a página */
+  }finally{
+    S.ufBusy = false;
+  }
+}
+
+function loopNacional(){
+  tickNacional();
+  timers.nat = setInterval(tickNacional, 15000);   // 15s
+}
+function loopUF(){
+  // uma UF por vez, ~2,2s entre elas: 27 UFs em ~1 min, muito abaixo do limite do TSE
+  timers.uf = setInterval(tickUF, 2200);
+  setTimeout(tickUF, 400);
+}
+
+/* pausa quando a aba está em segundo plano (economia de bateria no iPhone) */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){
+    clearInterval(timers.nat); clearInterval(timers.uf);
+  } else if (!S.frozen){
+    clearInterval(timers.nat); clearInterval(timers.uf);
+    tickNacional(); loopNacional(); loopUF();
+  }
+});
+
+/* botões de ordenação */
+document.querySelectorAll('.sort button').forEach(b => {
+  b.addEventListener('click', () => {
+    S.sort = b.dataset.sort;
+    document.querySelectorAll('.sort button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    sortRows();
+  });
+});
+
+/* =====================================================================
+   10. INICIALIZAÇÃO
+   ===================================================================== */
+(function init(){
+  buildRows();
+  const tinhaCache = loadCache();
+  if (tinhaCache){ renderMain(); renderUFs(); }
+
+  // sem dados ainda: mostra o estado de espera em vez de traços/zeros
+  if (!S.nat){
+    $('waiting').classList.add('on');
+    document.body.classList.add('waiting');
+    $('prog-big').textContent = '—';
+    $('prog-bar').style.width = '0%';
+  }
+
+  tickNacional();
+  if (!S.frozen){ loopNacional(); loopUF(); }
+})();
+</script>
+</body>
+</html>
