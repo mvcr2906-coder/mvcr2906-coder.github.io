@@ -604,6 +604,21 @@
     font-variant-numeric:tabular-nums}
   .pj-where .pc{width:26px;flex:0 0 auto;text-align:right;font-size:6.5px;color:var(--mut2);font-weight:700;
     font-variant-numeric:tabular-nums}
+
+  /* ---- slide 3: estados que podem virar ---- */
+  .pj-vira li{font-size:8px}
+  .pj-vira .sg{font-size:9.5px;font-weight:900}
+  .pj-vira .tr{position:relative;height:7px;background:rgba(255,255,255,.07)}
+  .pj-vira .tr .cw{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(245,241,232,.5)}
+  .pj-vira .tr i{position:absolute;top:0;bottom:0;border-radius:2px}
+  .pj-vira .lf{background:linear-gradient(90deg,#8E9AB0,#B9C4D6)}   /* faixa do Lula (esquerda) */
+  .pj-vira .ff{background:linear-gradient(90deg,#E8C878,#C9A24A)}   /* faixa do Flavio (direita) */
+  .pj-vira .vl{width:40px;font-size:7.5px}
+  .pj-vira .pc{width:34px;font-size:6.5px}
+  .pj-vira .tag{width:30px;flex:0 0 auto;text-align:center;font-size:6px;font-weight:900;
+    letter-spacing:.04em;padding:1px 2px;border-radius:3px}
+  .pj-vira .tag.q{background:rgba(232,200,120,.18);color:#F2DDA6;border:1px solid rgba(232,200,120,.4)}
+  .pj-vira .tag.h{background:rgba(143,214,160,.15);color:#8FD6A0;border:1px solid rgba(143,214,160,.35)}
   .pj-where-f{margin-top:5px;font-size:6.5px;letter-spacing:.06em;text-transform:uppercase;
     color:var(--t2);font-weight:800;line-height:1.4;padding-top:4px;border-top:1px solid var(--line)}
 
@@ -818,6 +833,10 @@
     .pj-where .vl{font-size:7px;width:40px}
     .pj-where .pc{font-size:6px;width:22px}
     .pj-where-f{font-size:6px;margin-top:4px}
+    .pj-vira .tr{height:6px}
+    .pj-vira .vl{width:36px;font-size:6.5px}
+    .pj-vira .pc{width:30px;font-size:6px}
+    .pj-vira .tag{width:26px;font-size:5.5px}
     /* ---------- ranking (fica na sobra, alinhado ao topo) ---------- */
     .rank{grid-area:rank;margin-top:7px;align-self:start;width:100%}
     .rank h2{padding:6px 12px 5px;font-size:8px;letter-spacing:.16em}
@@ -1139,6 +1158,7 @@
         <button type="button" data-slide="0" aria-pressed="true" title="Projeção"><span></span></button>
         <button type="button" data-slide="1" aria-pressed="false" title="O que o Flávio precisa"><span></span></button>
         <button type="button" data-slide="2" aria-pressed="false" title="Onde estão os votos"><span></span></button>
+        <button type="button" data-slide="3" aria-pressed="false" title="Estados que podem virar"><span></span></button>
       </div>
     </div>
     <div class="pj-slide" data-slide="0">
@@ -1222,6 +1242,13 @@
       <ul class="pj-where" id="wfList"></ul>
       <div class="pj-where-f" id="wfFoot">&mdash;</div>
     </div><!-- /slide 2 -->
+
+    <!-- ---------- SLIDE 3: estados que ainda podem virar ---------- -->
+    <div class="pj-slide" data-slide="3" hidden>
+      <div class="pj-where-h">Estados que ainda podem virar <b id="vwTot">&mdash;</b></div>
+      <ul class="pj-where pj-vira" id="vwList"></ul>
+      <div class="pj-where-f" id="vwFoot">&mdash;</div>
+    </div><!-- /slide 3 -->
   </section>
 
   <!-- ===================== FAIXA DE NOTICIAS ===================== -->
@@ -2289,7 +2316,8 @@ function slideIr(n, manual){
   var t = $('pjTitle');
   if (t) t.textContent = n === 0 ? 'Projeção final'
                           : n === 1 ? 'O que o Flávio precisa'
-                          : 'Onde estão os votos que faltam';
+                          : n === 2 ? 'Onde estão os votos que faltam'
+                          : 'Estados que ainda podem virar';
   try { localStorage.setItem(SLIDE_KEY, String(n)); } catch(e){}
   /* reinicia o relogio da roleta a cada troca */
   clearInterval(slideTimer);
@@ -2392,6 +2420,64 @@ function renderSlides(){
       cenSub.textContent = 'por ' + F0(Math.abs(saldoCen)) + ' votos';
     }
   }
+
+  /* ---- tela 3: estados que ainda podem virar ----
+     Matematica limpa, sem chute:
+       votos ja contados no estado = resta x pst/(100-pst)
+       margem ATUAL em votos       = marg% x votos contados
+       o estado VIRA se          resta > margem em votos
+     (porque o de tras pode tirar no maximo `resta` votos de saldo)
+     ------------------------------------------------------------------ */
+  var vw = $('vwList');
+  if (vw && saldo > 0){
+    var cands = [];
+    R.list.forEach(function(x){
+      if (!(x.resta > 0) || Math.abs(x.marg) < 0.05) return;
+      var pst = Math.min(99.5, Math.max(0.5, x.pst));
+      var contados = x.resta * (pst / (100 - pst));      /* votos ja apurados no estado */
+      var margVotos = Math.abs(x.marg) / 100 * contados; /* vantagem atual, em votos */
+      var viravel = x.resta > margVotos;                 /* o que falta supera a vantagem */
+      /* razao: quanto do que falta seria preciso para virar (menor = mais perto) */
+      var razao = margVotos / Math.max(1, x.resta);
+      cands.push({ u:x.u, marg:x.marg, resta:x.resta, pst:x.pst,
+                   margVotos:margVotos, viravel:viravel, razao:razao });
+    });
+    /* so estados onde quem lidera e o Lula e ha votos suficientes para interesse */
+    cands = cands.filter(function(c){ return c.marg < 0 && c.resta > 100000; })
+                 .sort(function(a,b){ return a.razao - b.razao; })
+                 .slice(0, 6);
+
+    if (!cands.length){
+      vw.innerHTML = '<li class="pj-vazio">Nenhum estado do Lula com votos suficientes para virar</li>';
+      if ($('vwTot')) $('vwTot').textContent = '0';
+      if ($('vwFoot')) $('vwFoot').textContent = '';
+    } else {
+      vw.innerHTML = cands.map(function(c){
+        var l = 50 - c.marg/2, f = 50 + c.marg/2;   /* margem em pontos -> posicao */
+        var lfW = Math.max(1, 50 - Math.max(0, Math.min(50, l)));
+        var ffW = Math.max(1, Math.min(50, f) - 50);
+        var tag = c.viravel ? 'VIRA' : 'SOLTA';
+        var cls = c.viravel ? 'q' : 'h';
+        return '<li>' +
+          '<span class="sg">' + c.u.toUpperCase() + '</span>' +
+          '<span class="tr"><span class="cw"></span>' +
+            '<i class="lf" style="left:' + (50 - lfW).toFixed(1) + '%;width:' + lfW.toFixed(1) + '%"></i>' +
+            '<i class="ff" style="left:50%;width:' + ffW.toFixed(1) + '%"></i>' +
+          '</span>' +
+          '<span class="vl">' + F1(Math.abs(c.marg)) + '</span>' +
+          '<span class="pc">' + Math.round(c.pst) + '%</span>' +
+          '<span class="tag ' + cls + '">' + tag + '</span>' +
+        '</li>';
+      }).join('');
+      var nv = cands.filter(function(c){ return c.viravel; }).length;
+      if ($('vwTot')) $('vwTot').textContent = nv + ' de ' + cands.length + ' com folga';
+      if ($('vwFoot')){
+        $('vwFoot').textContent = nv
+          ? nv + ' estado(s) onde o que falta já supera a vantagem do Lula'
+          : 'em nenhum deles o que falta supera a vantagem do Lula';
+      }
+    }
+  } else if (vw){ vw.innerHTML = '<li class="pj-vazio">Flávio já está à frente</li>'; }
 
   /* ---- tela 2 ---- */
   var wl = $('wfList');
