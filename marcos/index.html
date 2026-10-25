@@ -455,13 +455,34 @@
   .pj-left .who.f{color:#F2DDA6}
   .pj-left .pjv{width:34px;flex:0 0 auto;text-align:right;font-size:7px;color:var(--mut2);font-weight:700;font-variant-numeric:tabular-nums}
   .pj-spark{position:relative;height:34px;margin-top:2px}
+
+  /* faixa de virada: aparece so quando a lideranca da projecao troca */
+  .pj-cross{
+    display:flex;align-items:center;gap:7px;
+    margin:0 0 6px;padding:6px 9px;border-radius:8px;
+    background:linear-gradient(90deg,rgba(232,200,120,.22),rgba(232,200,120,.06));
+    border:1px solid rgba(232,200,120,.55);
+    animation:pjPulse 1.15s ease-in-out infinite;
+  }
+  .pj-cross[hidden]{display:none}
+  .pj-c-ico{width:14px;height:14px;flex:0 0 auto;color:#F2DDA6;display:block}
+  .pj-c-ico svg{width:100%;height:100%;display:block}
+  .pj-c-txt{font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--t2);font-weight:800;min-width:0}
+  .pj-c-txt b{color:#FFF6DE;font-weight:900;letter-spacing:.05em}
+  .pj-c-txt em{font-style:normal;color:var(--mut);font-weight:700}
+  .pj-c-val{margin-left:auto;font-size:10.5px;font-weight:900;color:#F2DDA6;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  @keyframes pjPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(232,200,120,.0);border-color:rgba(232,200,120,.55)}
+    50%{box-shadow:0 0 16px -2px rgba(232,200,120,.55);border-color:rgba(232,200,120,.95)}
+  }
+  @media (prefers-reduced-motion:reduce){.pj-cross{animation:none}}
   .pj-target{display:flex;align-items:center;gap:7px;margin:4px 0 2px}
   .pj-t-k{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);font-weight:800;flex:0 0 auto}
   .pj-t-bar{position:relative;flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
   .pj-t-bar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#8E9AB0,#B9C4D6);transition:width .6s ease}
   .pj-t-bar i.gold{background:linear-gradient(90deg,#E8C878,#C9A24A)}
   .pj-t-half{position:absolute;left:50%;top:-1px;bottom:-1px;width:1px;background:rgba(245,241,232,.6)}
-  .pj-t-v{font-size:8.5px;font-weight:800;color:var(--t2);flex:0 0 auto;letter-spacing:.01em}
+  .pj-t-v{font-size:9px;font-weight:900;color:#F2DDA6;flex:0 0 auto;letter-spacing:.01em;font-variant-numeric:tabular-nums}
 
   #pjSvg{width:100%;height:100%;display:block;overflow:visible}
   #pjSvg line{stroke:rgba(245,241,232,.22);stroke-width:1}
@@ -774,10 +795,25 @@
     .card{padding:6px 14px 7px;margin-top:5px}
     .big{font-size:20px}
     .totals{display:none}
-    .proj{margin-top:4px;padding:5px 10px 6px}
-    .pj-gauge{height:26px}
-    .pj-spark{height:20px}
+    .proj{margin-top:4px;padding:4px 9px 5px}
+    .pj-gauge{height:24px}
+    .pj-spark{display:none}
     .pj-v{font-size:13px}
+    .pj-note{display:none}
+    .pj-cross{margin:0 0 4px;padding:4px 7px;gap:5px}
+    .pj-c-txt{font-size:7px}
+    .pj-c-val{font-size:8.5px}
+    .pj-c-ico{width:11px;height:11px}
+    .pj-nums{margin-bottom:1px}
+    .pj-target{margin:3px 0 1px}
+    .pj-left{margin:4px 0 1px}
+    .pj-left ul{gap:1px}
+    .pj-left li{font-size:7px;gap:4px}
+    .pj-left .bar{height:4px}
+    .pj-left .sg{width:15px;font-size:7px}
+    .pj-left .pjv{width:30px;font-size:6.5px}
+    .pj-left .who{width:16px;font-size:6px}
+    .pj-l-h{font-size:6px;margin-bottom:2px}
     .rank{margin-top:4px}
     .rkc li{font-size:9px}
     .sort button{min-height:21px;font-size:7px}
@@ -975,6 +1011,16 @@
     <div class="pj-nums">
       <div class="pj-n l"><span class="pj-k">Lula 13</span><span class="pj-v num" id="pjL">—</span></div>
       <div class="pj-n r"><span class="pj-k">Fl&aacute;vio 22</span><span class="pj-v num" id="pjF">—</span></div>
+    </div>
+    <div class="pj-cross" id="pjCross" hidden>
+      <span class="pj-c-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>
+        </svg>
+      </span>
+      <span class="pj-c-txt"><b id="pjCrossWho">—</b> <em id="pjCrossWhen">passou à frente na projeção</em></span>
+      <span class="pj-c-val" id="pjCrossVal">—</span>
     </div>
     <div class="pj-gauge" id="pjGauge">
       <div class="pj-side la">Lula</div>
@@ -1612,6 +1658,24 @@ function tocarAlerta(){
   });
 }
 
+/** Virada de lideranca: 4 notas DESCENDENTES (destaque, nao alarme) */
+function tocarVirada(){
+  var ctx = audioCtx();
+  if (!ctx) return;
+  var t0 = ctx.currentTime;
+  [880.00, 783.99, 659.25, 523.25].forEach(function(f, i){
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.value = f;
+    var t = t0 + i * 0.19;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.3, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + 0.55);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + 0.6);
+  });
+}
+
 function setSom(on){
   somOn = on;
   var b = $('btnSound');
@@ -1715,6 +1779,9 @@ function acordarBarra(){
 var PROJ_KEY = 'marcos_proj_v1';
 var projHist = [];
 var projDados = null;
+var CROSS_KEY = 'marcos_cross_v1';   /* guarda quem lidera na projecao e a hora da troca */
+var crossEstado = null;
+var novidadeVirada = false;          /* true apenas no ciclo em que a lideranca virou */
 
 function projLoad(){
   try { projHist = JSON.parse(localStorage.getItem(PROJ_KEY) || '[]') || []; } catch(e){ projHist = []; }
@@ -1778,6 +1845,51 @@ function projRender(){
   mkP.style.left = pos(p.marg) + '%';
   $('pjPrjTx').textContent = (p.marg >= 0 ? '+' : '−') + F1(Math.abs(p.marg));
 
+  /* ---- virada de lideranca na projecao ----
+     Compara com a ultima leitura salva. So anuncia quando o lider
+     REALMENTE troca (e nao a cada atualizacao), guardando a hora.
+     Se o painel abre pela primeira vez, apenas memoriza o lider. */
+  var liderAgora = p.f > p.l ? '22' : (p.l > p.f ? '13' : '');
+  try { crossEstado = JSON.parse(localStorage.getItem(CROSS_KEY) || 'null'); } catch(e){ crossEstado = null; }
+  var faixa = $('pjCross');
+  if (!crossEstado){
+    /* primeira vez: procura no HISTORICO a ultima vez que a margem mudou
+       de sinal. Se achou, a virada e real e datada — mostra com a hora. */
+    var virada = null;
+    for (var i = projHist.length - 1; i > 0; i--){
+      var a = projHist[i-1].m, c = projHist[i].m;
+      if ((a === 0) !== (c === 0) && a !== 0 && c !== 0 && (a > 0) !== (c > 0)){
+        virada = projHist[i];
+        break;
+      }
+    }
+    if (virada && liderAgora){
+      crossEstado = { lider: liderAgora, quando: virada.t, margem: p.marg };
+    } else {
+      crossEstado = { lider: liderAgora, quando: 0, margem: p.marg };
+    }
+    try { localStorage.setItem(CROSS_KEY, JSON.stringify(crossEstado)); } catch(e){}
+  } else if (crossEstado.lider && liderAgora && crossEstado.lider !== liderAgora){
+    /* so troca com folga de 0,35 ponto: evita ficar piscando quando a
+       margem oscila em cima do zero entre duas leituras seguidas */
+    if (Math.abs(p.marg) >= 0.35){
+      crossEstado = { lider: liderAgora, quando: Date.now(), margem: p.marg };
+      try { localStorage.setItem(CROSS_KEY, JSON.stringify(crossEstado)); } catch(e){}
+      novidadeVirada = true;
+    }
+  }
+  if (faixa && crossEstado && crossEstado.quando && crossEstado.lider){
+    var quem = crossEstado.lider === '22' ? 'Flávio' : 'Lula';
+    var quando = new Date(crossEstado.quando);
+    var hh = String(quando.getHours()).padStart(2,'0') + ':' + String(quando.getMinutes()).padStart(2,'0');
+    $('pjCrossWho').textContent = quem;
+    $('pjCrossWhen').textContent = 'assumiu a liderança na projeção às ' + hh;
+    $('pjCrossVal').textContent = (p.marg >= 0 ? '+' : '−') + F1(Math.abs(p.marg)) + ' pts';
+    faixa.hidden = false;
+  } else if (faixa){
+    faixa.hidden = true;
+  }
+
   /* quem lidera a projecao */
   var b = $('pjBadge');
   var lider = p.f > p.l ? 'Flávio' : 'Lula';
@@ -1804,7 +1916,7 @@ function projRender(){
       var alvoPct = 50 + Math.abs(difV) / 2 / restV * 100;
       var tk = $('pjTk'), tv = $('pjTv'), tb = $('pjTbar');
       if (alvoPct > 100){
-        tk.textContent = atras + ' precisa de mais que 100%';
+        tk.textContent = atras + ' precisaria de +100%';
         tv.textContent = 'improvável';
         tb.style.width = '100%'; tb.className = '';
       } else {
@@ -1857,6 +1969,11 @@ function projRender(){
     projSave();
   }
   projSpark();
+
+  if (novidadeVirada){
+    novidadeVirada = false;
+    if (somOn) tocarVirada();
+  }
 
   sec.hidden = false;
 }
