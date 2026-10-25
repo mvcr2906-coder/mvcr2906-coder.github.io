@@ -56,6 +56,7 @@
     --br-azul:#002776;
     --lula:#77839A;
     --r:18px;
+    --news-h:50px;   /* altura da faixa de noticias na TV */
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
@@ -383,6 +384,29 @@
   .mini .p{font-size:10px;font-weight:700;color:var(--mut)}
   .mini.win .p{color:var(--txt)}.mini.win .k{color:var(--t2)}
 
+
+  /* ============ RANKING POR ESTADO ============ */
+  .rank{margin-top:20px;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;background:var(--card)}
+  .rank h2{margin:0;padding:13px 15px 10px;font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--t2);font-weight:800}
+  .rank h2 span{display:block;margin-top:3px;font-size:8px;letter-spacing:.12em;color:var(--mut2)}
+  .rk{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+  .rkc{background:var(--card);padding:10px 12px 12px}
+  .rkh{display:flex;align-items:baseline;gap:6px;margin-bottom:7px;min-width:0}
+  .rkh b{font-size:11px;font-weight:800;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rkh i{font-style:normal;font-size:8px;font-weight:800;color:var(--mut2);border:1px solid var(--line2);border-radius:3px;padding:1px 3px}
+  .rkh span{margin-left:auto;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut2);font-weight:800;white-space:nowrap}
+  .rkc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+  .rkc li{display:flex;align-items:center;gap:7px;font-size:12px;line-height:1}
+  .rkc .pos{width:14px;height:14px;flex:0 0 auto;border-radius:4px;display:grid;place-items:center;
+    font-size:8px;font-weight:800;color:var(--mut2);background:rgba(255,255,255,.06)}
+  .rkc li:nth-child(1) .pos{background:var(--grad);color:#0B1F3A}
+  .rkc .sg{font-size:11.5px;font-weight:800;letter-spacing:.06em;flex:0 0 auto}
+  .rkc .nm{flex:1;min-width:0;font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rkc .pt{font-weight:800;font-size:11px;color:var(--t2);flex:0 0 auto}
+  .rkc li.vazio{color:var(--mut2);font-size:9.5px;letter-spacing:.06em}
+  .rkn{padding:8px 14px 11px;font-size:8px;letter-spacing:.08em;color:var(--mut2);line-height:1.5}
+
   /* ============ TOTAIS ============ */
   .totals{margin-top:20px;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;background:var(--card)}
   .totals h2{margin:0;padding:13px 15px 9px;font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--t2);font-weight:800}
@@ -470,109 +494,150 @@
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
   /* =================================================================
-     MODO TV — 1080p SEM ROLAGEM (bloco final: sobrepoe tudo acima)
-     Ordem: esquerda = resultado/progresso/totais | direita = 27 UFs
-     Faixa de noticias fixa na base, sempre visivel.
+     MODO TV — SEM ROLAGEM EM QUALQUER RESOLUCAO
+     Estrutura: body = coluna flex (topo / conteudo / faixa fixa).
+     O conteudo ocupa exatamente o que sobra; a lista dos 27 estados
+     usa linhas flexiveis (3 col x 9 lin), entao ela ENCOLHE em vez de
+     invadir o rodape. Testado em 1280x720, 1366x768, 1600x900, 1920x1080.
      ================================================================= */
   @media (min-width:900px){
     html,body{height:100%;overflow:hidden}
-    body{font-size:15px;padding-bottom:0}
+    body{
+      display:flex;flex-direction:column;
+      height:100vh;box-sizing:border-box;padding:0;
+      font-size:15px;
+    }
+    body.hasnews{padding-bottom:var(--news-h,50px)}
 
-    /* topo compacto */
-    .store .photo{height:132px;background-position:center 28%}
-    .store .top{top:10px;left:26px;right:26px}
-    .store .title{padding:0 26px 11px}
-    h1{font-size:38px;gap:12px}
-    .kick{font-size:9.5px;letter-spacing:.3em}
-    .sub{font-size:9.5px}
-    .tvbar{padding:0 26px 6px}
-    .tv-k{font-size:8px}.tv-v{font-size:14px}.tv-v2{font-size:11px}
-    .top-sub{padding:6px 26px;font-size:8.5px}
+    /* ---------- topo ---------- */
+    header{flex:0 0 auto}
+    .store .photo{height:clamp(92px,13.5vh,150px);background-position:center 28%}
+    .store .top{top:9px;left:26px;right:26px}
+    .store .title{padding:0 26px 9px}
+    h1{font-size:clamp(28px,3.4vh,44px);gap:12px}
+    .kick{font-size:9px;letter-spacing:.3em}
+    .sub{font-size:9px}
+    .tvbar{padding:0 26px 5px}
+    .tv-k{font-size:8px}.tv-v{font-size:13px}.tv-v2{font-size:10.5px}
+    .top-sub{padding:5px 26px;font-size:8.5px}
 
-    /* grade principal */
+    /* ---------- conteudo ---------- */
     main.wrap{
-      max-width:1520px;box-sizing:border-box;
-      height:calc(100vh - 196px);
+      flex:1 1 auto;min-height:0;
+      width:100%;max-width:1520px;margin:0 auto;box-sizing:border-box;
       display:grid;
       grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);
-      grid-template-rows:auto auto auto 1fr auto;
-      grid-template-areas:"hero ufs" "prog ufs" "totals ufs" "footer footer";
-      gap:0 26px;padding:10px 26px 0;align-content:start;
+      grid-template-rows:auto auto auto minmax(0,1fr) auto;
+      grid-template-areas:"hero ufs" "prog ufs" "totals ufs" "rank ufs" "footer footer";
+      gap:0 24px;padding:6px 26px 0;align-content:stretch;
     }
+
+    /* ---------- candidatos ---------- */
     .hero{
-      grid-area:hero;margin-top:0;gap:8px 10px;
+      grid-area:hero;margin-top:0;gap:6px 10px;
       display:grid;grid-template-columns:1fr 1fr;
       grid-template-areas:"cl cf" "adv adv";
     }
     #cardL{grid-area:cl}
     #cardF{grid-area:cf}
-    .cand{flex:1;padding:14px 16px 13px;border-radius:14px}
-    .votes{font-size:42px}
-    .pct{font-size:24px}
+    .cand{flex:1;padding:10px 14px 11px;border-radius:13px}
+    .votes{font-size:clamp(28px,4.3vh,48px)}
+    .pct{font-size:clamp(17px,2.3vh,26px)}
     .unit{font-size:8px}
-    .who b{font-size:15px}.who span{font-size:9px}
-    .ct .av{width:38px;height:38px;font-size:16px}
-    .bar{height:8px;margin-top:9px}
-    /* vantagem: faixa compacta de uma linha, logo abaixo dos candidatos */
+    .who b{font-size:14px}.who span{font-size:8.5px}
+    .ct .av{width:34px;height:34px;font-size:15px}
+    .bar{height:7px;margin-top:7px}
+    /* vantagem: faixa de uma linha, abaixo dos cards */
     .adv{
-      grid-area:adv;margin-top:0;padding:6px 13px;border-radius:10px;
+      grid-area:adv;margin-top:0;padding:5px 13px;border-radius:10px;
       display:flex;align-items:center;gap:11px;
     }
     .al{font-size:8px;letter-spacing:.16em;flex:0 0 auto}
     .am{display:flex;align-items:baseline;gap:7px;margin-top:0;flex:0 0 auto}
-    .app{font-size:22px;line-height:1}
+    .app{font-size:clamp(16px,2.1vh,24px);line-height:1}
     .app em{font-size:8.5px;letter-spacing:.08em}
     .aw{font-size:9px;padding-bottom:0;letter-spacing:.09em}
     .av2{margin-top:0;margin-left:auto;font-size:9.5px;white-space:nowrap}
 
-    .card{grid-area:prog;margin-top:10px;padding:11px 16px}
+    /* ---------- progresso ---------- */
+    .card{grid-area:prog;margin-top:7px;padding:8px 15px 9px}
     .card .ch{gap:10px}
-    .big{font-size:30px}
-    .prog{height:10px;margin-top:6px}
-    .pm{font-size:9.5px;margin-top:6px}
+    .big{font-size:clamp(22px,3vh,32px)}
+    .prog{height:8px;margin-top:5px}
+    .pm{font-size:9px;margin-top:5px}
 
-    .totals{grid-area:totals;margin-top:10px}
-    .totals h2{padding:8px 13px 6px;font-size:8.5px}
-    .tg{grid-template-columns:repeat(5,1fr)}
-    .tc{padding:7px 11px 8px}
-    .tc .k{font-size:7.5px}
-    .tc .v{font-size:16px}
-    .tc .d{font-size:8px}
+    /* ---------- totais: uma linha compacta ---------- */
+    .totals{grid-area:totals;margin-top:7px}
+    .totals h2{padding:6px 12px 4px;font-size:8px;letter-spacing:.16em}
+    .tg{grid-template-columns:repeat(5,1fr);gap:1px}
+    .tc{padding:5px 10px 6px}
+    .tc .k{font-size:7px;letter-spacing:.1em}
+    .tc .v{font-size:clamp(12px,1.6vh,17px);margin-top:2px}
+    .tc .d{font-size:7.5px;margin-top:1px}
     .tc[style]{grid-column:auto!important}
 
-    /* ---- 27 UFs: 3 colunas densas ---- */
-    .sec{grid-area:ufs;margin-top:0;display:flex;flex-direction:column;min-height:0}
-    .sh{margin-bottom:6px}
-    .sh h2{font-size:9.5px;letter-spacing:.16em}
-    .sh span{font-size:9px}
-    .sort{max-width:none;margin-bottom:7px;gap:5px}
-    .sort button{min-height:26px;font-size:8px;border-radius:7px;letter-spacing:.07em}
-    #ufs{
-      display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
-      gap:5px!important;flex-direction:row!important;overflow:hidden;
-    }
-    .uf{padding:5px 8px 6px;border-radius:8px}
-    .ut{gap:5px}
-    .uid{gap:5px}
-    .sg{font-size:11px;letter-spacing:.06em}
-    .nm{display:none}
-    .up{font-size:9px}
-    .ub{height:3px;margin:3px 0 4px}
-    .ur{gap:6px}
-    .mini .k{font-size:6.5px;letter-spacing:.06em}
-    .mini .vv{gap:4px;margin-top:1px}
-    .mini .v{font-size:10px}
-    .mini .p{font-size:8.5px}
-    #ufs li.spot{box-shadow:0 0 0 1.5px rgba(201,162,74,.6)}
+    /* ---------- ranking (fica na sobra, alinhado ao topo) ---------- */
+    .rank{grid-area:rank;margin-top:7px;align-self:start;width:100%}
+    .rank h2{padding:6px 12px 5px;font-size:8px;letter-spacing:.16em}
+    .rank h2 span{font-size:7px;margin-top:2px}
+    .rkc{padding:6px 10px 8px}
+    .rkh{margin-bottom:4px}
+    .rkh b{font-size:9.5px}
+    .rkh i{font-size:7px}
+    .rkh span{font-size:7px}
+    .rkc ol{gap:3px}
+    .rkc li{font-size:10px;gap:6px}
+    .rkc .pos{width:13px;height:13px;font-size:7.5px}
+    .rkc .sg{font-size:10.5px}
+    .rkc .nm{font-size:7.5px}
+    .rkc .pt{font-size:10px}
+    .rkn{display:none}
 
-    footer{grid-area:footer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:14px}
-    .flagbar{width:44px;margin:0}
-    footer .f1{font-size:7.5px;line-height:1.5;text-align:left}
+    /* ---------- 27 UFs: 3 colunas x 9 linhas FLEXIVEIS ---------- */
+    .sec{grid-area:ufs;margin-top:0;display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden}
+    .sh{margin-bottom:5px;flex:0 0 auto}
+    .sh h2{font-size:9px;letter-spacing:.16em}
+    .sh span{font-size:8.5px}
+    .sort{max-width:none;margin-bottom:5px;gap:5px;flex:0 0 auto}
+    .sort button{min-height:24px;font-size:7.5px;border-radius:6px;letter-spacing:.06em}
+    #ufsWrap{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden}
+    #ufs{
+      display:grid!important;
+      grid-template-columns:repeat(3,minmax(0,1fr))!important;
+      grid-template-rows:repeat(9,minmax(0,1fr));
+      gap:4px!important;flex:1 1 auto;min-height:0;overflow:hidden;
+    }
+    .uf{
+      padding:4px 7px;border-radius:7px;
+      min-height:0;overflow:hidden;
+      display:flex;flex-direction:column;justify-content:center;gap:2px;
+    }
+    .ut{gap:4px;flex:0 0 auto}
+    .uid{gap:4px;min-width:0}
+    .sg{font-size:10.5px;letter-spacing:.05em}
+    .nm{display:none}
+    .up{font-size:8.5px;white-space:nowrap;overflow:hidden}
+    .ub{display:none}
+    .ur{gap:5px;flex:0 0 auto}
+    .mini .k{font-size:6px;letter-spacing:.04em}
+    .mini .vv{gap:3px;margin-top:1px;flex-wrap:nowrap}
+    .mini .v{font-size:9px}
+    .mini .p{font-size:7.5px}
+    #ufs li.spot{box-shadow:0 0 0 1.5px rgba(201,162,74,.65)}
+
+    /* ---------- rodape ---------- */
+    footer{
+      grid-area:footer;margin-top:5px;flex:0 0 auto;
+      display:flex;align-items:center;justify-content:center;gap:12px;
+    }
+    .flagbar{width:38px;margin:0}
+    footer .f1{font-size:7px;line-height:1.45;text-align:left}
     footer .f2{display:none}
 
-    /* ---- faixa de noticias FIXA na base (fora do fluxo) ---- */
+    /* ---------- faixa de noticias fixa na base ---------- */
     #news{
-      position:fixed!important;left:0;right:0;bottom:0;height:50px;
+      position:fixed!important;left:0;right:0;bottom:0;
+      height:var(--news-h,50px);
       border-radius:0;border:0;border-top:1px solid var(--line2);
       background:rgba(8,21,38,.985);padding-left:16px;
       box-shadow:0 -16px 34px -26px #000;
@@ -583,17 +648,45 @@
     .nw-s{font-size:9.5px}
     .nw-live{font-size:9px;padding:4px 8px;margin-right:10px}
     .nw-tabs button{font-size:9px;padding:5px 9px}
-    body.hasnews main.wrap{height:calc(100vh - 268px)}
-    body.hasnews #tvctl{bottom:60px}
+    body.hasnews #tvctl{bottom:calc(var(--news-h,50px) + 10px)}
   }
+
+  /* telas baixas (720p/768p): aperta mais */
+  @media (min-width:900px) and (max-height:800px){
+    .store .photo{height:78px}
+    .tvbar{padding-bottom:3px}
+    .top-sub{padding:3px 26px}
+    h1{font-size:26px}
+    .kick,.sub{font-size:8px}
+    .votes{font-size:26px}
+    .pct{font-size:15px}
+    .cand{padding:8px 12px 9px}
+    .card{padding:6px 14px 7px;margin-top:5px}
+    .big{font-size:20px}
+    .totals{display:none}
+    .rank{margin-top:5px}
+    .rkc li{font-size:9px}
+    .sort button{min-height:21px;font-size:7px}
+    #ufs{gap:3px!important}
+    .uf{padding:3px 6px}
+    .sg{font-size:9.5px}
+    .up{font-size:8px}
+    .mini .v{font-size:8.5px}
+    .mini .p{font-size:7px}
+    footer .f1{font-size:6.5px}
+  }
+
   @media (min-width:1500px){
-    h1{font-size:46px}
-    .votes{font-size:50px}
-    .pct{font-size:27px}
-    .big{font-size:34px}
-    .app{font-size:25px}
-    #ufs .uf{padding:6px 9px 7px}
-    .mini .v{font-size:11px}
+    h1{font-size:clamp(34px,3.6vh,48px)}
+    .votes{font-size:clamp(34px,4.6vh,54px)}
+    .pct{font-size:clamp(20px,2.5vh,29px)}
+    .big{font-size:clamp(26px,3.2vh,36px)}
+    .app{font-size:clamp(18px,2.2vh,26px)}
+    #ufs .uf{padding:5px 8px}
+    .mini .v{font-size:10px}
+    .mini .p{font-size:8px}
+    .rank h2{font-size:8.5px}
+    .rkc li{font-size:11px}
   }
 </style>
 </head>
@@ -740,6 +833,22 @@
         <div class="d num" id="tEl"></div>
       </div>
     </div>
+  </section>
+
+  <!-- ===================== RANKING POR ESTADO ===================== -->
+  <section class="rank" id="rank" hidden aria-label="Ranking dos estados por candidato">
+    <h2>Ranking por estado <span>onde cada um ganha</span></h2>
+    <div class="rk">
+      <div class="rkc">
+        <div class="rkh"><b>Lula</b><i>13</i><span id="rkLc">&mdash;</span></div>
+        <ol id="rkL"></ol>
+      </div>
+      <div class="rkc">
+        <div class="rkh"><b>Fl&aacute;vio Bolsonaro</b><i>22</i><span id="rkFc">&mdash;</span></div>
+        <ol id="rkF"></ol>
+      </div>
+    </div>
+    <div class="rkn">Estados onde o candidato lidera, ordenado pela margem em pontos.</div>
   </section>
 
   <!-- ===================== FAIXA DE NOTICIAS ===================== -->
@@ -1151,6 +1260,64 @@ function renderUFs(){
     }
   });
   sortRows();
+  renderRank();
+}
+
+/* =====================================================================
+   RANKING POR ESTADO
+   Mostra os 3 estados de maior margem onde cada candidato lidera.
+   So entra UF com boletim publicado (st > 0) e os dois candidatos lidos:
+   nada e estimado, nada e extrapolado de parcial pequena.
+   ===================================================================== */
+var RANK_N = 3;
+
+function renderRank(){
+  var sec = $('rank'); if (!sec) return;
+  var base = [];
+  UFS.forEach(function(u){
+    var d = S.ufs[u];
+    if (!d || !(d.st > 0)) return;
+    var l = d.cands['13'], f = d.cands['22'];
+    if (!l || !f) return;
+    if (!(l.pvap > 0) && !(f.pvap > 0)) return;
+    var marg = l.pvap - f.pvap;
+    base.push({ u:u, marg:marg, l:l.pvap, f:f.pvap, n:d.st });
+  });
+
+  if (!base.length){
+    sec.hidden = true;
+    return;
+  }
+
+  var lidersL = base.filter(function(x){ return x.marg > 0; })
+                    .sort(function(a,b){ return b.marg - a.marg; });
+  var lidersF = base.filter(function(x){ return x.marg < 0; })
+                    .sort(function(a,b){ return a.marg - b.marg; });
+
+  function pintar(olId, cntId, lista, sinal){
+    var ol = $(olId), cnt = $(cntId);
+    ol.innerHTML = '';
+    if (!lista.length){
+      ol.innerHTML = '<li class="vazio">Nenhum estado apurado ainda</li>';
+      cnt.textContent = '0 estados';
+      return;
+    }
+    cnt.textContent = lista.length + (lista.length === 1 ? ' estado' : ' estados');
+    lista.slice(0, RANK_N).forEach(function(x, i){
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="pos">' + (i+1) + '</span>' +
+        '<span class="sg">' + x.u.toUpperCase() + '</span>' +
+        '<span class="nm">' + NOMES[x.u] + '</span>' +
+        '<span class="pt num">+' + F1(Math.abs(x.marg)) + '</span>';
+      li.title = NOMES[x.u] + ': ' + F1(sinal > 0 ? x.l : x.f) + '% a '
+               + F1(sinal > 0 ? x.f : x.l) + '% (margem ' + F1(Math.abs(x.marg)) + ' pontos)';
+      ol.appendChild(li);
+    });
+  }
+
+  pintar('rkL', 'rkLc', lidersL, 1);
+  pintar('rkF', 'rkFc', lidersF, -1);
+  sec.hidden = false;
 }
 
 function sortRows(){
