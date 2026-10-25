@@ -653,7 +653,7 @@ function animNum(el, key, to, fmt, ms = 600){
   const t0 = performance.now();
   if (el._raf) cancelAnimationFrame(el._raf);
   const step = now => {
-    const k = Math.min(1, (now - t0) / ms);
+    const k = Math.min(1, Math.max(0, (now - t0) / ms));   // trava em [0,1]: evita valor negativo no 1o frame
     const e = 1 - Math.pow(1 - k, 3);            // easeOutCubic
     el.textContent = fmt(from + (to - from) * e);
     if (k < 1) el._raf = requestAnimationFrame(step);
