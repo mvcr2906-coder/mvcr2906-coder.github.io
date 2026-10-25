@@ -407,6 +407,97 @@
   .rkc li.vazio{color:var(--mut2);font-size:9.5px;letter-spacing:.06em}
   .rkn{padding:8px 14px 11px;font-size:8px;letter-spacing:.08em;color:var(--mut2);line-height:1.5}
 
+
+  /* ============ PROJECAO ============ */
+  .proj{margin-top:20px;border-radius:var(--r);border:1px solid var(--line);background:var(--card);padding:12px 14px 13px}
+  .pj-h{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .pj-h b{font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--t2);font-weight:800}
+  .pj-b{font-size:8px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:4px;
+    background:rgba(255,255,255,.08);color:var(--t2)}
+  .pj-b.gold{background:linear-gradient(90deg,#E8C878,#C9A24A);color:#0B1F3A}
+  .pj-b.blue{background:rgba(119,131,154,.28);color:#DCE4F0}
+  .pj-h i{margin-left:auto;font-style:normal;font-size:8px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut2);font-weight:800}
+  .pj-nums{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
+  .pj-n{display:flex;flex-direction:column;gap:1px}
+  .pj-n.r{align-items:flex-end}
+  .pj-k{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut2);font-weight:800}
+  .pj-v{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .pj-n.l .pj-v{color:#B9C4D6}
+  .pj-n.r .pj-v{color:#F2DDA6}
+  /* gauge: margem caminhando para o zero */
+  .pj-gauge{position:relative;height:38px;margin:2px 0 4px}
+  .pj-track{position:absolute;left:0;right:0;top:18px;height:4px;border-radius:2px;
+    background:linear-gradient(90deg,rgba(119,131,154,.55),rgba(245,241,232,.16) 46%,rgba(245,241,232,.16) 54%,rgba(201,162,74,.55))}
+  .pj-zero{position:absolute;left:50%;top:-4px;width:1px;height:12px;background:rgba(245,241,232,.75)}
+  .pj-side{position:absolute;top:0;font-size:7px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--mut2)}
+  .pj-side.la{left:0}.pj-side.fa{right:0}
+  .pj-mk{position:absolute;top:14px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:0}
+  .pj-mk span{width:9px;height:9px;border-radius:50%;display:block}
+  .pj-mk em{font-style:normal;font-size:7.5px;font-weight:800;white-space:nowrap;margin-top:2px;letter-spacing:.02em}
+  .pj-mk.cur{top:8px}
+  .pj-mk.cur span{background:#8E9AB0;box-shadow:0 0 0 2px rgba(11,31,58,.9)}
+  .pj-mk.cur em{color:var(--mut)}
+  .pj-mk.prj{top:26px}
+  .pj-mk.prj span{background:var(--g1);box-shadow:0 0 0 2px rgba(11,31,58,.9),0 0 10px rgba(232,200,120,.55)}
+  .pj-mk.prj em{color:#F2DDA6;font-weight:800}
+
+  .pj-left{margin:5px 0 1px}
+  .pj-l-h{display:flex;justify-content:space-between;font-size:6.5px;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--mut2);font-weight:800;margin-bottom:3px}
+  .pj-l-h b{color:var(--t2);letter-spacing:.04em}
+  .pj-left ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+  .pj-left li{display:flex;align-items:center;gap:5px;font-size:8px;line-height:1}
+  .pj-left .sg{width:16px;flex:0 0 auto;font-weight:800;font-size:8px;letter-spacing:.05em}
+  .pj-left .bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;position:relative}
+  .pj-left .bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#8E9AB0,#B9C4D6)}
+  .pj-left .bar i.f{background:linear-gradient(90deg,#E8C878,#C9A24A)}
+  .pj-left .who{width:26px;flex:0 0 auto;text-align:right;font-size:7px;font-weight:800;color:var(--mut2)}
+  .pj-left .who.f{color:#F2DDA6}
+  .pj-left .pjv{width:34px;flex:0 0 auto;text-align:right;font-size:7px;color:var(--mut2);font-weight:700;font-variant-numeric:tabular-nums}
+  .pj-spark{position:relative;height:34px;margin-top:2px}
+  .pj-target{display:flex;align-items:center;gap:7px;margin:4px 0 2px}
+  .pj-t-k{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);font-weight:800;flex:0 0 auto}
+  .pj-t-bar{position:relative;flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
+  .pj-t-bar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#8E9AB0,#B9C4D6);transition:width .6s ease}
+  .pj-t-bar i.gold{background:linear-gradient(90deg,#E8C878,#C9A24A)}
+  .pj-t-half{position:absolute;left:50%;top:-1px;bottom:-1px;width:1px;background:rgba(245,241,232,.6)}
+  .pj-t-v{font-size:8.5px;font-weight:800;color:var(--t2);flex:0 0 auto;letter-spacing:.01em}
+
+  #pjSvg{width:100%;height:100%;display:block;overflow:visible}
+  #pjSvg line{stroke:rgba(245,241,232,.22);stroke-width:1}
+  #pjSvg polyline{stroke:var(--g1);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+  .pj-leg{position:absolute;left:0;right:0;bottom:-9px;display:flex;justify-content:space-between;
+    font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);font-weight:800}
+  .pj-leg b{color:var(--mut)}
+  .pj-note{margin:4px 0 0;font-size:7px;line-height:1.45;letter-spacing:.05em;color:#5C6678;font-style:italic}
+  @media (max-width:899px){
+    .pj-target{margin:7px 0 3px;gap:8px}
+    .pj-t-k{font-size:8px}
+    .pj-t-v{font-size:10.5px}
+    .pj-l-h{font-size:8px;margin-bottom:5px}
+    .pj-left{margin:9px 0 3px}
+    .pj-left ul{gap:4px}
+    .pj-left li{font-size:10px;gap:7px}
+    .pj-left .sg{width:20px;font-size:10px}
+    .pj-left .bar{height:7px}
+    .pj-left .who{width:30px;font-size:8.5px}
+    .pj-left .pjv{width:44px;font-size:8.5px}
+    .pj-gauge{height:42px;margin:6px 0 6px}
+    .pj-track{top:20px;height:5px}
+    .pj-side{font-size:8px}
+    .pj-mk.cur{top:9px}
+    .pj-mk.prj{top:29px}
+    .pj-mk em{font-size:8.5px}
+    .pj-spark{height:46px;margin-top:8px}
+    .pj-v{font-size:26px}
+    .pj-k{font-size:9px}
+    .pj-h b{font-size:10.5px}
+    .pj-b{font-size:8.5px;padding:4px 8px}
+    .pj-h i{font-size:7.5px}
+    .pj-leg{font-size:7.5px;bottom:-4px}
+  }
+
+
   /* ============ TOTAIS ============ */
   .totals{margin-top:20px;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;background:var(--card)}
   .totals h2{margin:0;padding:13px 15px 9px;font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--t2);font-weight:800}
@@ -527,8 +618,8 @@
       width:100%;max-width:1520px;margin:0 auto;box-sizing:border-box;
       display:grid;
       grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);
-      grid-template-rows:auto auto auto minmax(0,1fr) auto;
-      grid-template-areas:"hero ufs" "prog ufs" "totals ufs" "rank ufs" "footer footer";
+      grid-template-rows:auto auto auto auto minmax(0,1fr) auto;
+      grid-template-areas:"hero ufs" "prog ufs" "totals ufs" "proj ufs" "rank ufs" "footer footer";
       gap:0 24px;padding:6px 26px 0;align-content:stretch;
     }
 
@@ -576,6 +667,25 @@
     .tc .d{font-size:7.5px;margin-top:1px}
     .tc[style]{grid-column:auto!important}
 
+
+    /* ---------- projecao (compacta na TV) ---------- */
+    .proj{grid-area:proj;margin-top:6px;padding:7px 12px 8px;align-self:start}
+    .pj-h{margin-bottom:5px;gap:6px}
+    .pj-h b{font-size:7.5px;letter-spacing:.15em}
+    .pj-b{font-size:7px;padding:2px 6px}
+    .pj-h i{font-size:6.5px;letter-spacing:.07em}
+    .pj-nums{margin-bottom:3px}
+    .pj-k{font-size:6.5px}
+    .pj-v{font-size:clamp(14px,1.85vh,20px)}
+    .pj-gauge{height:32px;margin:0 0 2px}
+    .pj-track{top:15px;height:3px}
+    .pj-side{font-size:6px}
+    .pj-mk.cur{top:6px}
+    .pj-mk.prj{top:21px}
+    .pj-mk span{width:7px;height:7px}
+    .pj-mk em{font-size:6.5px;margin-top:1px}
+    .pj-spark{height:26px}
+    .pj-leg{font-size:6px;bottom:-7px;letter-spacing:.06em}
     /* ---------- ranking (fica na sobra, alinhado ao topo) ---------- */
     .rank{grid-area:rank;margin-top:7px;align-self:start;width:100%}
     .rank h2{padding:6px 12px 5px;font-size:8px;letter-spacing:.16em}
@@ -664,7 +774,11 @@
     .card{padding:6px 14px 7px;margin-top:5px}
     .big{font-size:20px}
     .totals{display:none}
-    .rank{margin-top:5px}
+    .proj{margin-top:4px;padding:5px 10px 6px}
+    .pj-gauge{height:26px}
+    .pj-spark{height:20px}
+    .pj-v{font-size:13px}
+    .rank{margin-top:4px}
     .rkc li{font-size:9px}
     .sort button{min-height:21px;font-size:7px}
     #ufs{gap:3px!important}
@@ -849,6 +963,43 @@
       </div>
     </div>
     <div class="rkn">Estados onde o candidato lidera, ordenado pela margem em pontos.</div>
+  </section>
+
+  <!-- ===================== PROJECAO ===================== -->
+  <section class="proj" id="proj" hidden aria-label="Projeção do resultado final">
+    <div class="pj-h">
+      <b>Proje&ccedil;&atilde;o final</b>
+      <span id="pjBadge" class="pj-b">—</span>
+      <i id="pjFalta">—</i>
+    </div>
+    <div class="pj-nums">
+      <div class="pj-n l"><span class="pj-k">Lula 13</span><span class="pj-v num" id="pjL">—</span></div>
+      <div class="pj-n r"><span class="pj-k">Fl&aacute;vio 22</span><span class="pj-v num" id="pjF">—</span></div>
+    </div>
+    <div class="pj-gauge" id="pjGauge">
+      <div class="pj-side la">Lula</div>
+      <div class="pj-side fa">Fl&aacute;vio</div>
+      <div class="pj-track"><i class="pj-zero"></i></div>
+      <div class="pj-mk cur" id="pjMkCur"><span></span><em id="pjCurTx">—</em></div>
+      <div class="pj-mk prj" id="pjMkPrj"><span></span><em id="pjPrjTx">—</em></div>
+    </div>
+    <div class="pj-target">
+      <span class="pj-t-k" id="pjTk">—</span>
+      <div class="pj-t-bar"><i id="pjTbar"></i><span class="pj-t-half"></span></div>
+      <span class="pj-t-v" id="pjTv">—</span>
+    </div>
+    <div class="pj-left" id="pjLeft">
+      <div class="pj-l-h">Onde ainda falta contar <b id="pjLeftTot">—</b></div>
+      <ul id="pjLeftList"></ul>
+    </div>
+    <div class="pj-note">Cen&aacute;rio: cada estado mantendo o ritmo atual at&eacute; 100% das se&ccedil;&otilde;es. N&atilde;o &eacute; previs&atilde;o.</div>
+    <div class="pj-spark">
+      <svg id="pjSvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <line id="pjZero" x1="0" y1="50" x2="100" y2="50" vector-effect="non-scaling-stroke"/>
+        <polyline id="pjLine" points="" fill="none" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <div class="pj-leg"><span>margem projetada</span><b id="pjHist">—</b></div>
+    </div>
   </section>
 
   <!-- ===================== FAIXA DE NOTICIAS ===================== -->
@@ -1261,6 +1412,7 @@ function renderUFs(){
   });
   sortRows();
   renderRank();
+  projRender();
 }
 
 /* =====================================================================
@@ -1546,6 +1698,191 @@ function acordarBarra(){
   document.addEventListener(ev, acordarBarra, {passive:true});
 });
 
+
+
+/* =====================================================================
+   13. PROJECAO DO RESULTADO FINAL
+   Calculo proprio a partir dos arquivos oficiais ja baixados (S.ufs):
+
+     - cada UF e levada a 100% das proprias secoes com o % atual dela
+     - o peso de cada UF e o eleitorado (e.te) do arquivo da UF
+     - UFs sem boletim NAO entram (nada e chutado): o texto mostra
+       quantas UFs e quanto do eleitorado estao na conta
+
+   Nao e previsao nem bolsa de aposta: e o cenario se o ritmo de cada
+   estado se mantiver. A margem historica fica salva no navegador.
+   ===================================================================== */
+var PROJ_KEY = 'marcos_proj_v1';
+var projHist = [];
+var projDados = null;
+
+function projLoad(){
+  try { projHist = JSON.parse(localStorage.getItem(PROJ_KEY) || '[]') || []; } catch(e){ projHist = []; }
+}
+function projSave(){
+  /* guarda no maximo 240 pontos (~1h com nacional a cada 15s) */
+  if (projHist.length > 240) projHist = projHist.slice(-240);
+  try { localStorage.setItem(PROJ_KEY, JSON.stringify(projHist)); } catch(e){}
+}
+
+function projCalc(){
+  var peso = 0, bl = 0, bf = 0, usadas = 0;
+  UFS.forEach(function(u){
+    var d = S.ufs[u];
+    if (!d || !(d.st > 0)) return;
+    var l = d.cands['13'], f = d.cands['22'];
+    if (!l || !f) return;
+    if (!(l.pvap > 0) && !(f.pvap > 0)) return;
+    var te = d.eleit > 0 ? d.eleit : 0;
+    if (!te) return;
+    bl += te * l.pvap / 100;
+    bf += te * f.pvap / 100;
+    peso += te;
+    usadas++;
+  });
+  if (!peso || usadas < 3) return null;
+  var sl = bl / peso, sf = bf / peso, tot = sl + sf;
+  if (!tot) return null;
+  return {
+    l: sl / tot * 100, f: sf / tot * 100,
+    marg: (sf - sl) / tot * 100,
+    n: usadas, peso: peso
+  };
+}
+
+function projRender(){
+  var sec = $('proj'); if (!sec) return;
+  var p = projCalc();
+  if (!p){ sec.hidden = true; return; }
+  projDados = p;
+
+  $('pjL').textContent = F2(p.l) + '%';
+  $('pjF').textContent = F2(p.f) + '%';
+
+  /* agora (nacional) */
+  var nl = 0, nf = 0;
+  if (S.nat && S.nat.cands && S.nat.cands['13'] && S.nat.cands['22']){
+    nl = S.nat.cands['13'].pvap; nf = S.nat.cands['22'].pvap;
+  }
+
+  /* gauge: 0% = empate no centro; +/-8 pontos cabem na largura */
+  var ESC = 8;
+  function pos(m){ return Math.max(2, Math.min(98, 50 + (m / ESC) * 50)); }
+  var mCur = nf - nl;
+  var mkC = $('pjMkCur'), mkP = $('pjMkPrj');
+  if (nl || nf){
+    mkC.style.left = pos(mCur) + '%';
+    mkC.style.display = '';
+    $('pjCurTx').textContent = (mCur >= 0 ? '+' : '−') + F1(Math.abs(mCur));
+  } else { mkC.style.display = 'none'; }
+  mkP.style.left = pos(p.marg) + '%';
+  $('pjPrjTx').textContent = (p.marg >= 0 ? '+' : '−') + F1(Math.abs(p.marg));
+
+  /* quem lidera a projecao */
+  var b = $('pjBadge');
+  var lider = p.f > p.l ? 'Flávio' : 'Lula';
+  var dif = Math.abs(p.f - p.l);
+  if (dif < 1){ b.className = 'pj-b'; b.textContent = 'Empate técnico'; }
+  else { b.className = 'pj-b ' + (p.f > p.l ? 'gold' : 'blue'); b.textContent = lider + ' à frente'; }
+
+  $('pjFalta').textContent = p.n + ' UFs · ' + F0(p.peso / 1000000) + ' mi de eleitorado';
+
+  /* ---- meta de virada ----
+     Quantos % dos votos que AINDA FALTAM o candidato atras precisa
+     para empatar. Vem direto dos totais oficiais: diferenca atual de
+     votos x votos restantes estimados (secoes que faltam x media de
+     validos por secao ja apurada). Se a meta > 50%, esta perdendo. */
+  var nat2 = S.nat;
+  if (nat2 && nat2.st > 0 && nat2.ts > nat2.st && nat2.vv > 0 && p.l && p.f){
+    var difV = (nat2.cands['22'] ? nat2.cands['22'].vap : 0) - (nat2.cands['13'] ? nat2.cands['13'].vap : 0);
+    var restSec = nat2.ts - nat2.st;
+    var med = nat2.vv / nat2.st;
+    var restV = restSec * med;
+    if (restV > 0 && Math.abs(difV) > 0){
+      /* % que o de tras precisa no que falta */
+      var atras = difV > 0 ? 'Lula' : 'Flávio';
+      var alvoPct = 50 + Math.abs(difV) / 2 / restV * 100;
+      var tk = $('pjTk'), tv = $('pjTv'), tb = $('pjTbar');
+      if (alvoPct > 100){
+        tk.textContent = atras + ' precisa de mais que 100%';
+        tv.textContent = 'improvável';
+        tb.style.width = '100%'; tb.className = '';
+      } else {
+        tk.textContent = atras + ' precisa de';
+        tv.textContent = F2(alvoPct) + '% do que falta';
+        tb.style.width = Math.max(0, Math.min(100, alvoPct)) + '%';
+        tb.className = alvoPct > 50 ? '' : 'gold';
+      }
+    }
+
+    /* ---- onde ainda falta contar ----
+       Peso = votos que ainda faltam na UF (secoes restantes x media
+       de validos/secao da propria UF). Mostra quem lidera la hoje. */
+    var pend = [];
+    UFS.forEach(function(u){
+      var d = S.ufs[u];
+      var resta = 0, pl = 0, pf = 0, lider = '';
+      if (d && d.ts > 0 && d.ts > d.st && d.vv > 0 && d.st > 0){
+        resta = (d.ts - d.st) * (d.vv / d.st);
+        pl = d.cands['13'] ? d.cands['13'].pvap : 0;
+        pf = d.cands['22'] ? d.cands['22'].pvap : 0;
+      }
+      if (resta > 0){
+        pend.push({ u:u, resta:resta, pl:pl, pf:pf, f: pf > pl });
+      }
+    });
+    pend.sort(function(a,b){ return b.resta - a.resta; });
+    var top = pend.slice(0, 4);
+    var list = $('pjLeftList'), tot = $('pjLeftTot');
+    if (list && top.length){
+      var somaTop = 0;
+      pend.forEach(function(x){ somaTop += x.resta; });
+      tot.textContent = F0(somaTop/1000000) + ' mi de votos';
+      var max = top[0].resta || 1;
+      list.innerHTML = top.map(function(x){
+        var w = Math.max(4, (x.resta / max) * 100);
+        return '<li><span class="sg">' + x.u.toUpperCase() + '</span>' +
+          '<span class="bar"><i class="' + (x.f ? 'f' : '') + '" style="width:' + w.toFixed(0) + '%"></i></span>' +
+          '<span class="who' + (x.f ? ' f' : '') + '">' + (x.f ? '22' : '13') + '</span>' +
+          '<span class="pjv">' + (x.resta >= 1000000 ? F1(x.resta/1000000) + ' mi'
+                                : F0(Math.round(x.resta/1000)) + ' mil') + '</span></li>';
+      }).join('');
+    } else if (list){ list.innerHTML = ''; }
+  }
+
+  /* serie historica da margem */
+  var ult = projHist[projHist.length - 1];
+  if (!ult || Math.abs(ult.m - p.marg) > 0.001 || (Date.now() - ult.t) > 60000){
+    projHist.push({ t: Date.now(), m: +p.marg.toFixed(3) });
+    projSave();
+  }
+  projSpark();
+
+  sec.hidden = false;
+}
+
+function projSpark(){
+  var svg = $('pjSvg'), line = $('pjLine');
+  if (!svg || !line) return;
+  var pts = projHist.slice(-60);
+  if (pts.length < 2){ line.setAttribute('points', ''); $('pjHist').textContent = 'coletando…'; return; }
+  var ms = pts.map(function(x){ return x.m; });
+  var lo = Math.min.apply(null, ms), hi = Math.max.apply(null, ms);
+  var lim = Math.max(1.2, Math.abs(lo), Math.abs(hi)) * 1.25;
+  var y0 = 50 - (lim / (2*lim)) * 0;   /* reservado */
+  var out = pts.map(function(x, i){
+    var px = (i / (pts.length - 1)) * 100;
+    var py = 50 - (x.m / lim) * 46;
+    return px.toFixed(2) + ',' + Math.max(3, Math.min(97, py)).toFixed(2);
+  }).join(' ');
+  line.setAttribute('points', out);
+  var zero = $('pjZero');
+  if (zero){ zero.setAttribute('y1', '50'); zero.setAttribute('y2', '50'); }
+  var delta = pts[pts.length-1].m - pts[0].m;
+  $('pjHist').textContent = (delta >= 0 ? '+' : '−') + F1(Math.abs(delta)) + ' pts no período';
+}
+
+projLoad();
 
 /* =====================================================================
    12. FAIXA DE NOTICIAS — Brasil e Mundo
