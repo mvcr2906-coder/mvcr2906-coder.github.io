@@ -462,8 +462,10 @@
     margin:0 0 6px;padding:6px 9px;border-radius:8px;
     background:linear-gradient(90deg,rgba(232,200,120,.22),rgba(232,200,120,.06));
     border:1px solid rgba(232,200,120,.55);
-    animation:pjPulse 1.15s ease-in-out infinite;
+    animation:pjPulse 1.15s ease-in-out 52;
   }
+  /* depois do pisca inicial, fica estatica: chama atencao sem poluir a TV */
+  .pj-cross.parado{animation:none}
   .pj-cross[hidden]{display:none}
   .pj-c-ico{width:14px;height:14px;flex:0 0 auto;color:#F2DDA6;display:block}
   .pj-c-ico svg{width:100%;height:100%;display:block}
@@ -1899,6 +1901,8 @@ function projRender(){
       $('pjCrossWhen').textContent = 'virou a liderança na projeção';
     }
     $('pjCrossVal').textContent = (p.marg >= 0 ? '+' : '−') + F1(Math.abs(p.marg)) + ' pts';
+    var recem = crossEstado.quando > 0 && (Date.now() - crossEstado.quando) < 90000;
+    faixa.classList.toggle('parado', !recem);
     faixa.hidden = false;
   } else if (faixa){
     faixa.hidden = true;
