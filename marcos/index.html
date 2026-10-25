@@ -169,6 +169,29 @@
   }
   #offline.on{display:block}
 
+
+  /* ============ VIRADA NA CONTAGEM (votos reais) ============ */
+  .tvcr{
+    display:flex;align-items:center;gap:9px;
+    margin:0 16px 10px;padding:9px 13px;border-radius:12px;
+    background:linear-gradient(90deg,rgba(232,200,120,.26),rgba(232,200,120,.07));
+    border:1px solid rgba(232,200,120,.7);
+    animation:tvcrPulse 1.05s ease-in-out 57;
+  }
+  .tvcr[hidden]{display:none}
+  .tvcr.parado{animation:none}
+  .tvcr-ico{width:17px;height:17px;flex:0 0 auto;color:#FFF3D2;display:block}
+  .tvcr-ico svg{width:100%;height:100%;display:block}
+  .tvcr-txt{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#F0E6CF;font-weight:800;min-width:0;line-height:1.3}
+  .tvcr-txt b{color:#FFFDF5;font-weight:900}
+  .tvcr-txt em{font-style:normal;color:rgba(240,230,207,.8);font-weight:700}
+  .tvcr-val{margin-left:auto;font-size:13px;font-weight:900;color:#FFEDBE;
+    font-variant-numeric:tabular-nums;flex:0 0 auto;white-space:nowrap}
+  @keyframes tvcrPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(232,200,120,0);border-color:rgba(232,200,120,.7)}
+    50%{box-shadow:0 0 22px -2px rgba(232,200,120,.75);border-color:#F2DDA6}
+  }
+  @media (prefers-reduced-motion:reduce){.tvcr{animation:none}}
   /* ---- barra de status (modo TV) ---- */
   .tvbar{display:flex;align-items:stretch;gap:0;padding:0 16px 9px;overflow:hidden}
   .tv-item{display:flex;flex-direction:column;gap:2px;min-width:0;padding-right:20px}
@@ -521,6 +544,69 @@
   }
 
 
+
+  /* ============ ROLETA: 3 TELAS NA PROJECAO ============ */
+  .pj-dots{display:flex;gap:4px;margin-left:auto;flex:0 0 auto}
+  .pj-dots button{
+    -webkit-appearance:none;appearance:none;background:none;border:0;padding:3px;cursor:pointer;
+    display:block;line-height:0;
+  }
+  .pj-dots button span{
+    display:block;width:16px;height:4px;border-radius:2px;background:rgba(245,241,232,.22);
+    transition:background .3s,width .3s;
+  }
+  .pj-dots button[aria-pressed="true"] span{background:var(--grad);width:22px}
+  .pj-slide[hidden]{display:none}
+  .pj-slide{animation:pjIn .42s ease both}
+  @keyframes pjIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+  /* ---- slide 1: o que o Flavio precisa ---- */
+  .pj-need-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+  .pj-nk{display:block;font-size:7px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut2);font-weight:800}
+  .pj-nv{display:flex;align-items:baseline;gap:5px;margin-top:2px}
+  .pj-nv span{font-size:22px;font-weight:900;letter-spacing:-.02em;color:#F2DDA6;line-height:1}
+  .pj-nv em{font-style:normal;font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:800}
+  .pj-need-r{text-align:right}
+  .pj-nv2{font-size:13px;font-weight:900;color:#FFF3D2;line-height:1.1;margin-top:1px}
+  .pj-nk2{display:block;font-size:6.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);font-weight:700}
+  .pj-need-bar{position:relative;height:9px;border-radius:5px;background:rgba(255,255,255,.08);margin:8px 0 3px;overflow:visible}
+  .pj-need-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#C9A24A,#E8C878);transition:width .7s cubic-bezier(.22,.8,.24,1)}
+  .pj-need-bar i.ok{background:linear-gradient(90deg,#5FA97A,#8FD6A0)}
+  .pj-need-half{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:rgba(245,241,232,.55)}
+  .pj-need-half-tx{position:absolute;left:50%;top:11px;transform:translateX(-50%);font-size:6px;color:var(--mut2);font-weight:800;letter-spacing:.05em}
+  .pj-need-legend{display:flex;justify-content:space-between;margin-top:9px;font-size:6.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--mut2);font-weight:800}
+  .pj-need-legend span:last-child{color:var(--t2)}
+  .pj-need-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+  .pj-ng{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:8px;padding:5px 8px 6px}
+  .pj-ng-k{display:block;font-size:6px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);font-weight:800}
+  .pj-ng b{display:block;font-size:11px;font-weight:900;color:var(--t2);margin-top:2px;line-height:1.15}
+  .pj-ng small{display:block;font-size:6.5px;color:var(--mut);margin-top:1px;letter-spacing:.04em}
+
+
+  .pj-need-now{display:flex;align-items:center;gap:6px;margin-top:6px;padding:5px 8px;
+    background:rgba(232,200,120,.10);border:1px solid rgba(232,200,120,.32);border-radius:7px}
+  .pj-nw-k{font-size:6px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);font-weight:800;flex:0 0 auto}
+  .pj-need-now b{font-size:11px;font-weight:900;color:#F2DDA6;margin:0 2px;flex:0 0 auto;
+    font-variant-numeric:tabular-nums}
+  /* ---- slide 2: onde estao os votos ---- */
+  .pj-where-h{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:7px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut2);font-weight:800;margin-bottom:4px}
+  .pj-where-h b{color:var(--t2);letter-spacing:.04em;font-size:8px}
+  .pj-where{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+  .pj-where li{display:flex;align-items:center;gap:6px;font-size:8px;line-height:1}
+  .pj-where .pos{width:9px;flex:0 0 auto;font-size:6.5px;color:var(--mut2);font-weight:800}
+  .pj-where .sg{width:20px;flex:0 0 auto;font-size:9.5px;font-weight:900;letter-spacing:.04em}
+  .pj-where .tr{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;min-width:20px}
+  .pj-where .tr i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#8E9AB0,#B9C4D6)}
+  .pj-where .tr i.f{background:linear-gradient(90deg,#C9A24A,#E8C878)}
+  .pj-where .vl{width:44px;flex:0 0 auto;text-align:right;font-size:8px;font-weight:800;color:var(--t2);
+    font-variant-numeric:tabular-nums}
+  .pj-where .pc{width:26px;flex:0 0 auto;text-align:right;font-size:6.5px;color:var(--mut2);font-weight:700;
+    font-variant-numeric:tabular-nums}
+  .pj-where-f{margin-top:5px;font-size:6.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--t2);font-weight:800;line-height:1.4;padding-top:4px;border-top:1px solid var(--line)}
+
   /* ============ TOTAIS ============ */
   .totals{margin-top:20px;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;background:var(--card)}
   .totals h2{margin:0;padding:13px 15px 9px;font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--t2);font-weight:800}
@@ -635,6 +721,14 @@
     .tv-k{font-size:8px}.tv-v{font-size:13px}.tv-v2{font-size:10.5px}
     .top-sub{padding:5px 26px;font-size:8.5px}
 
+
+    /* faixa de virada da contagem no modo TV: entra no fluxo do header */
+    .tvcr{
+      margin:0 26px 6px;padding:5px 11px;gap:7px;border-radius:9px;
+    }
+    .tvcr-ico{width:13px;height:13px}
+    .tvcr-txt{font-size:9px}
+    .tvcr-val{font-size:11px}
     /* ---------- conteudo ---------- */
     main.wrap{
       flex:1 1 auto;min-height:0;
@@ -709,6 +803,21 @@
     .pj-mk em{font-size:6.5px;margin-top:1px}
     .pj-spark{height:26px}
     .pj-leg{font-size:6px;bottom:-7px;letter-spacing:.06em}
+
+    .pj-dots button span{width:13px;height:3px}
+    .pj-dots button[aria-pressed="true"] span{width:18px}
+    .pj-nv span{font-size:clamp(16px,2vh,21px)}
+    .pj-nv2{font-size:clamp(10px,1.3vh,13px)}
+    .pj-need-bar{height:7px;margin:6px 0 2px}
+    .pj-need-grid{margin-top:5px;gap:5px}
+    .pj-ng{padding:4px 7px 5px}
+    .pj-ng b{font-size:clamp(9px,1.15vh,11px)}
+    .pj-where li{font-size:7px}
+    .pj-where .sg{font-size:8.5px;width:18px}
+    .pj-where .tr{height:5px}
+    .pj-where .vl{font-size:7px;width:40px}
+    .pj-where .pc{font-size:6px;width:22px}
+    .pj-where-f{font-size:6px;margin-top:4px}
     /* ---------- ranking (fica na sobra, alinhado ao topo) ---------- */
     .rank{grid-area:rank;margin-top:7px;align-self:start;width:100%}
     .rank h2{padding:6px 12px 5px;font-size:8px;letter-spacing:.16em}
@@ -786,7 +895,7 @@
 
   /* telas baixas (720p/768p): aperta mais */
   @media (min-width:900px) and (max-height:800px){
-    .store .photo{height:78px}
+    .store .photo{height:66px}
     .tvbar{padding-bottom:3px}
     .top-sub{padding:3px 26px}
     h1{font-size:26px}
@@ -798,6 +907,12 @@
     .big{font-size:20px}
     .totals{display:none}
     .proj{margin-top:4px;padding:4px 9px 5px}
+    .tvcr{margin:0 26px 4px;padding:4px 9px;gap:6px}
+    .tvcr-ico{width:11px;height:11px}
+    .tvcr-txt{font-size:8px}
+    .tvcr-val{font-size:9.5px}
+    footer .f1{font-size:6px;line-height:1.3}
+    footer{margin-top:3px}
     .pj-gauge{height:24px}
     .pj-spark{display:none}
     .pj-v{font-size:13px}
@@ -894,6 +1009,17 @@
     <div class="tv-item"><span class="tv-k">Munic&iacute;pios</span><span class="tv-v num" id="tvMun">&mdash;</span></div>
     <div class="tv-sep"></div>
     <div class="tv-item grow"><span class="tv-k">Situa&ccedil;&atilde;o</span><span class="tv-v2" id="tvState">Conectando ao TSE</span></div>
+  </div>
+  <!-- virada na CONTAGEM oficial (votos reais, nao projecao) -->
+  <div id="tvcr" class="tvcr" hidden>
+    <span class="tvcr-ico" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>
+      </svg>
+    </span>
+    <span class="tvcr-txt"><b id="tvcrWho">—</b> <em id="tvcrWhen">passou à frente na contagem oficial</em></span>
+    <span class="tvcr-val" id="tvcrVal">—</span>
   </div>
 </header>
 
@@ -1004,12 +1130,18 @@
   </section>
 
   <!-- ===================== PROJECAO ===================== -->
-  <section class="proj" id="proj" hidden aria-label="Projeção do resultado final">
+  <section class="proj" id="proj" hidden aria-label="Projeção e cenários">
     <div class="pj-h">
-      <b>Proje&ccedil;&atilde;o final</b>
+      <b id="pjTitle">Proje&ccedil;&atilde;o final</b>
       <span id="pjBadge" class="pj-b">—</span>
       <i id="pjFalta">—</i>
+      <div class="pj-dots" role="tablist" aria-label="Telas">
+        <button type="button" data-slide="0" aria-pressed="true" title="Projeção"><span></span></button>
+        <button type="button" data-slide="1" aria-pressed="false" title="O que o Flávio precisa"><span></span></button>
+        <button type="button" data-slide="2" aria-pressed="false" title="Onde estão os votos"><span></span></button>
+      </div>
     </div>
+    <div class="pj-slide" data-slide="0">
     <div class="pj-nums">
       <div class="pj-n l"><span class="pj-k">Lula 13</span><span class="pj-v num" id="pjL">—</span></div>
       <div class="pj-n r"><span class="pj-k">Fl&aacute;vio 22</span><span class="pj-v num" id="pjF">—</span></div>
@@ -1048,6 +1180,48 @@
       </svg>
       <div class="pj-leg"><span>margem projetada</span><b id="pjHist">—</b></div>
     </div>
+    </div><!-- /slide 0 -->
+
+    <!-- ---------- SLIDE 1: o que o Flavio precisa ---------- -->
+    <div class="pj-slide" data-slide="1" hidden>
+      <div class="pj-need">
+        <div class="pj-need-top">
+          <div>
+            <span class="pj-nk">Fl&aacute;vio precisa de</span>
+            <div class="pj-nv"><span id="ndPct">&mdash;</span><em>dos votos que faltam</em></div>
+          </div>
+          <div class="pj-need-r">
+            <span class="pj-nk">Saldo necess&aacute;rio</span>
+            <div class="pj-nv2 num" id="ndSaldo">&mdash;</div>
+            <span class="pj-nk2" id="ndSaldoLbl">votos de vantagem</span>
+          </div>
+        </div>
+        <div class="pj-need-bar">
+          <i id="ndBar"></i>
+          <span class="pj-need-half"></span>
+          <b class="pj-need-half-tx">50%</b>
+        </div>
+        <div class="pj-need-legend">
+          <span>empate</span><span id="ndGap">&mdash;</span>
+        </div>
+      </div>
+      <div class="pj-need-grid">
+        <div class="pj-ng"><span class="pj-ng-k">Faltam contar</span><b class="num" id="ndRest">&mdash;</b><small id="ndSec">&mdash;</small></div>
+        <div class="pj-ng"><span class="pj-ng-k">Se mantiver o ritmo</span><b id="ndCen">&mdash;</b><small id="ndCenSub">&mdash;</small></div>
+      </div>
+      <div class="pj-need-now">
+        <span class="pj-nw-k">Precisa fazer</span>
+        <b id="ndPct2">&mdash;</b>
+        <span class="pj-nw-k">em cada 100 votos restantes</span>
+      </div>
+    </div><!-- /slide 1 -->
+
+    <!-- ---------- SLIDE 2: onde estao os votos que faltam ---------- -->
+    <div class="pj-slide" data-slide="2" hidden>
+      <div class="pj-where-h">Onde est&atilde;o os votos que faltam <b id="wfTot">&mdash;</b></div>
+      <ul class="pj-where" id="wfList"></ul>
+      <div class="pj-where-f" id="wfFoot">&mdash;</div>
+    </div><!-- /slide 2 -->
   </section>
 
   <!-- ===================== FAIXA DE NOTICIAS ===================== -->
@@ -1384,6 +1558,8 @@ function renderMain(){
       + F0(nat.eleitApur || (nat.comp + nat.abst)) + ' de ' + F0(nat.eleit)
     : '';
 
+  renderContagem();
+
   var wait = nat.st === 0 && pct < 99.999;
   $('wait').className = wait ? 'on' : '';
   document.body.classList.toggle('waiting', !!wait);   /* nao apaga .hasnews */
@@ -1461,6 +1637,7 @@ function renderUFs(){
   sortRows();
   renderRank();
   projRender();
+  renderSlides();
 }
 
 /* =====================================================================
@@ -1766,6 +1943,72 @@ function acordarBarra(){
 
 
 
+
+/* =====================================================================
+   14. VIRADA NA CONTAGEM OFICIAL (votos reais)
+   Diferente da projecao: aqui e o numero que o TSE publica.
+   Detecta a troca de lider entre duas leituras e mostra a hora exata.
+
+   SEMENTE: se esta e a primeira vez no navegador e a contagem JA esta
+   virada, nao da para saber a hora pelo proprio painel (o cruzamento
+   foi antes da pagina abrir). Nesse caso usamos a hora em que o painel
+   viu o dado virar pela primeira vez (registrada em SEED), e o texto
+   deixa claro que foi "a partir das HH:MM" — nunca inventamos um minuto.
+   ===================================================================== */
+var CNT_KEY = 'marcos_contagem_v1';
+var SEED_T = 1792970509000;    /* 25/10/2026 20:21:49 BRT — ultima leitura com Flavio a frente */
+var cntEstado = null;
+
+function cntLider(){
+  var n = S.nat;
+  if (!n || !n.cands || !n.cands['13'] || !n.cands['22'] || !(n.st > 0)) return '';
+  var l = n.cands['13'].vap, f = n.cands['22'].vap;
+  if (l === f) return '';
+  return l > f ? '13' : '22';
+}
+
+function renderContagem(){
+  var faixa = $('tvcr'); if (!faixa) return;
+  var lider = cntLider();
+  var m = margemContagem();          /* Flavio - Lula, em pontos */
+
+  try { cntEstado = JSON.parse(localStorage.getItem(CNT_KEY) || 'null'); } catch(e){ cntEstado = null; }
+
+  if (!cntEstado){
+    if (lider === '13'){
+      /* ja comecou virado neste navegador: usa a semente, marcando "a partir de" */
+      cntEstado = { lider:'13', quando:SEED_T, semente:true };
+    } else {
+      cntEstado = { lider:lider || '', quando:0, semente:false };
+    }
+    try { localStorage.setItem(CNT_KEY, JSON.stringify(cntEstado)); } catch(e){}
+  } else if (lider && cntEstado.lider && cntEstado.lider !== lider){
+    /* trocou de lider agora: guarda a hora real */
+    cntEstado = { lider:lider, quando:Date.now(), semente:false };
+    try { localStorage.setItem(CNT_KEY, JSON.stringify(cntEstado)); } catch(e){}
+    if (somOn) tocarVirada();
+  }
+
+  if (!cntEstado || !cntEstado.quando || !cntEstado.lider){ faixa.hidden = true; return; }
+
+  var quem = cntEstado.lider === '13' ? 'Lula' : 'Flávio';
+  var q = new Date(cntEstado.quando);
+  var hh = String(q.getHours()).padStart(2,'0') + ':' + String(q.getMinutes()).padStart(2,'0');
+  $('tvcrWho').textContent = quem;
+  $('tvcrWhen').textContent = cntEstado.semente
+    ? 'à frente na contagem oficial desde ' + hh
+    : 'passou à frente na contagem oficial às ' + hh;
+  var difV = 0;
+  if (S.nat && S.nat.cands['13'] && S.nat.cands['22']){
+    difV = Math.abs(S.nat.cands['13'].vap - S.nat.cands['22'].vap);
+  }
+  $('tvcrVal').textContent = (difV ? '+ ' + F0(difV) + ' votos' : '—');
+
+  var recem = !cntEstado.semente && cntEstado.quando > 0 && (Date.now() - cntEstado.quando) < 120000;
+  faixa.classList.toggle('parado', !recem);
+  faixa.hidden = false;
+}
+
 /* =====================================================================
    13. PROJECAO DO RESULTADO FINAL
    Calculo proprio a partir dos arquivos oficiais ja baixados (S.ufs):
@@ -2019,6 +2262,176 @@ function projSpark(){
 
 projLoad();
 
+
+/* =====================================================================
+   15. ROLETA DA PROJECAO — 3 telas, troca a cada 2 minutos
+   Tela 0: projecao (numeros, regua, meta, onde falta, serie)
+   Tela 1: o que o Flavio precisa para ganhar (saldo e % do que falta)
+   Tela 2: onde estao os votos que faltam (ranking por volume)
+   Toda a matematica sai dos arquivos oficiais ja baixados.
+   ===================================================================== */
+var slideAtual = 0, slideTimer = null;
+var SLIDE_MS = 120000;          /* 2 minutos em cada tela */
+var SLIDE_KEY = 'marcos_slide_v1';
+
+function slideIr(n, manual){
+  var alvos = document.querySelectorAll('.pj-slide');
+  var dots = document.querySelectorAll('.pj-dots button');
+  if (!alvos.length) return;
+  n = ((n % alvos.length) + alvos.length) % alvos.length;
+  Array.prototype.forEach.call(alvos, function(a, i){
+    if (i === n) a.removeAttribute('hidden'); else a.setAttribute('hidden','');
+  });
+  Array.prototype.forEach.call(dots, function(d, i){
+    d.setAttribute('aria-pressed', String(i === n));
+  });
+  slideAtual = n;
+  var t = $('pjTitle');
+  if (t) t.textContent = n === 0 ? 'Projeção final'
+                          : n === 1 ? 'O que o Flávio precisa'
+                          : 'Onde estão os votos que faltam';
+  try { localStorage.setItem(SLIDE_KEY, String(n)); } catch(e){}
+  /* reinicia o relogio da roleta a cada troca */
+  clearInterval(slideTimer);
+  slideTimer = setInterval(function(){ slideIr(slideAtual + 1); }, SLIDE_MS);
+}
+
+/* ---------- calculos dos slides 1 e 2 ---------- */
+function statsResta(){
+  /* ------------------------------------------------------------------
+     VOTOS QUE FALTAM
+     Ancora no arquivo NACIONAL (mais confiavel): validos por secao x
+     secoes que faltam. Depois distribui entre as UFs pelo volume de
+     cada uma, com duas travas:
+       (a) nenhuma UF pode ter mais votos a contar do que eleitorado tem
+       (b) se um arquivo de UF vier estranho (ex.: repetindo o nacional),
+           a UF e descartada da distribuicao em vez de envenenar a conta
+     Sem o nacional, cai para a soma das UFs.
+     ------------------------------------------------------------------ */
+  var nat = S.nat;
+  var list = [], somaUf = 0, eleitUsado = 0;
+
+  UFS.forEach(function(u){
+    var d = S.ufs[u];
+    if (!d || !(d.ts > 0) || !(d.st > 0) || !(d.vv > 0)) return;
+    var resta = (d.ts - d.st) * (d.vv / d.st);
+    if (!(resta > 0)) return;
+    var te = d.eleit > 0 ? d.eleit : 0;
+    if (te > 0 && resta > te) return;          /* (b) arquivo suspeito: descarta */
+    var l = d.cands['13'] ? d.cands['13'].pvap : 0;
+    var f = d.cands['22'] ? d.cands['22'].pvap : 0;
+    list.push({ u:u, resta:resta, pst:d.pst, l:l, f:f, marg:f-l });
+    somaUf += resta;
+    if (te > 0) eleitUsado += te;
+  });
+
+  /* total oficial: nacional quando existir e fizer sentido */
+  var tot = somaUf;
+  if (nat && nat.ts > nat.st && nat.st > 0 && nat.vv > 0){
+    var nacionalRest = (nat.ts - nat.st) * (nat.vv / nat.st);
+    /* (a) trava global: nao pode restar mais voto do que eleitorado */
+    if (nacionalRest > 0 && (!nat.eleit || nacionalRest <= nat.eleit)) tot = nacionalRest;
+  }
+  if (!list.length || !(tot > 0)) return { tot:0, list:[] };
+
+  /* reescala a distribuicao para casar com o total oficial */
+  if (somaUf > 0 && Math.abs(somaUf - tot) / tot > 0.02){
+    var k = tot / somaUf;
+    list.forEach(function(x){ x.resta = x.resta * k; });
+  }
+  list.sort(function(a,b){ return b.resta - a.resta; });
+  return { tot:tot, list:list };
+}
+
+function renderSlides(){
+  var nat = S.nat;
+  if (!nat || !nat.cands || !nat.cands['13'] || !nat.cands['22'] || !(nat.st > 0)) return;
+  var L = nat.cands['13'], F = nat.cands['22'];
+  var dif = F.vap - L.vap;                       /* negativo = Flavio atras */
+  var R = statsResta();
+  if (!R.tot) return;
+
+  /* ---- tela 1 ---- */
+  var saldo = -dif;                              /* votos que ele precisa a mais */
+  var pctNec = 50 + saldo / R.tot * 100;
+  var ndPct = $('ndPct'), ndBar = $('ndBar');
+  if (ndPct){
+    ndPct.textContent = pctNec > 100 ? '> 100%' : F2(pctNec) + '%';
+    ndBar.style.width = Math.max(0, Math.min(100, pctNec)) + '%';
+    ndBar.className = pctNec <= 50 ? 'ok' : '';
+  }
+  if ($('ndSaldo')){
+    $('ndSaldo').textContent = saldo > 0 ? F0(saldo) + ' votos' : 'à frente';
+    $('ndSaldoLbl').textContent = saldo > 0 ? 'de vantagem no que falta' : '—';
+  }
+  if ($('ndPct2')){
+    $('ndPct2').textContent = pctNec > 100 ? '>100' : Math.round(pctNec) + ' de 100';
+  }
+  if ($('ndGap')){
+    $('ndGap').textContent = saldo > 0
+      ? (pctNec - 50).toFixed(2).replace('.', ',') + ' pts acima do empate'
+      : 'já está à frente';
+  }
+  if ($('ndRest')){
+    $('ndRest').textContent = F0(R.tot);
+    $('ndSec').textContent = F0(Math.max(0, nat.ts - nat.st)) + ' seções em ' + R.list.length + ' estados';
+  }
+
+  /* cenario: mantendo as margens atuais, quem ganha */
+  var saldoCen = 0;
+  R.list.forEach(function(x){ saldoCen += x.resta * x.marg / 100; });
+  var cen = $('ndCen'), cenSub = $('ndCenSub');
+  if (cen){
+    if (saldoCen > 0){
+      cen.textContent = 'Flávio ganha';
+      cen.style.color = '#F2DDA6';
+      cenSub.textContent = 'por ' + F0(Math.abs(saldoCen)) + ' votos';
+    } else {
+      cen.textContent = 'Lula ganha';
+      cen.style.color = '#B9C4D6';
+      cenSub.textContent = 'por ' + F0(Math.abs(saldoCen)) + ' votos';
+    }
+  }
+
+  /* ---- tela 2 ---- */
+  var wl = $('wfList');
+  if (wl){
+    var top = R.list.slice(0, 7);
+    var max = top.length ? top[0].resta : 1;
+    wl.innerHTML = top.map(function(x, i){
+      var w = Math.max(5, (x.resta / max) * 100);
+      var quem = x.marg > 0 ? 'f' : '';
+      return '<li>' +
+        '<span class="pos">' + (i+1) + '</span>' +
+        '<span class="sg">' + x.u.toUpperCase() + '</span>' +
+        '<span class="tr"><i class="' + quem + '" style="width:' + w.toFixed(0) + '%"></i></span>' +
+        '<span class="vl">' + F0(x.resta) + '</span>' +
+        '<span class="pc">' + (x.resta / R.tot * 100).toFixed(1).replace('.', ',') + '%</span>' +
+      '</li>';
+    }).join('');
+    if ($('wfTot')) $('wfTot').textContent = F0(R.tot) + ' votos';
+    var top5 = R.list.slice(0, 5).reduce(function(a, x){ return a + x.resta; }, 0);
+    var top2 = R.list.slice(0, 2).reduce(function(a, x){ return a + x.resta; }, 0);
+    if ($('wfFoot')){
+      var n2 = R.list.slice(0,2).map(function(x){ return x.u.toUpperCase(); }).join(' + ');
+      $('wfFoot').textContent = n2 + ' = ' + (top2 / R.tot * 100).toFixed(1).replace('.', ',')
+        + '% do que falta · 5 maiores = ' + (top5 / R.tot * 100).toFixed(1).replace('.', ',') + '%';
+    }
+  }
+}
+
+/* cliques nas bolinhas trocam na hora (e reiniciam o relogio) */
+Array.prototype.forEach.call(document.querySelectorAll('.pj-dots button'), function(b){
+  b.addEventListener('click', function(){ slideIr(parseInt(b.getAttribute('data-slide'), 10) || 0, true); });
+});
+
+/* a roleta so roda quando existe projecao na tela */
+function iniciarRoleta(){
+  var n = 0;
+  try { var v = parseInt(localStorage.getItem(SLIDE_KEY), 10); if (v >= 0 && v <= 2) n = v; } catch(e){}
+  slideIr(n);
+}
+
 /* =====================================================================
    12. FAIXA DE NOTICIAS — Brasil e Mundo
    O RSS nao tem CORS: o news.json e gerado no servidor a cada 30 min
@@ -2135,6 +2548,7 @@ if (load()){
   renderMain(); renderUFs();
   if (girando) passoGiro();
 }
+iniciarRoleta();   /* a roleta comeca junto com a pagina (mesmo antes do 1o dado) */
 if (!S.nat){
   $('wait').className = 'on';
   document.body.classList.add('waiting');
