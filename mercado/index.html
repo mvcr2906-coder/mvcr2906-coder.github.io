@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<!-- =====================================================================
+     MERCADO — REAÇÃO À REELEIÇÃO DO LULA (26/10/2026)
+     Arquivo único, sem framework, sem backend.
+     Consome mercado/mercado.json (gerado no servidor, cron 5 min, Yahoo
+     Finance) + ../marcos/news.json (RSS Brasil/Mundo, cron 30 min).
+
+     Yahoo Finance não tem CORS: o servidor busca as cotações e publica o
+     JSON aqui; o painel faz polling com cache-buster. Nada é inventado:
+     ativo sem dado mostra "—" e a idade do dado fica visível no cartão.
+
+     DESIGN: mesmo visual do painel APURAÇÃO PRESIDENTE OCHURCH (25/10):
+     preto profundo, anel degradê âmbar→laranja→rosa, cards escuros,
+     tipografia tabular, selo AO VIVO pulsante.
+     --------------------------------------------------------------------- -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MERCADO">
+<meta name="theme-color" content="#07070A">
+<meta name="color-scheme" content="dark">
+<title>MERCADO — REAÇÃO À REELEIÇÃO</title>
+<style>
+  :root{
+    --bg:#07070A;
+    --bg-2:#0B0B10;
+    --card:#101014;
+    --card-2:#15151B;
+    --line:rgba(255,255,255,.085);
+    --line-2:rgba(255,255,255,.16);
+    --txt:#F6F6F8;
+    --txt-2:#C9C9D2;
+    --mut:#8A8A96;
+    --mut-2:#5F5F6B;
+    --g1:#FFC24A;   /* âmbar  */
+    --g2:#FF7A3D;   /* laranja */
+    --g3:#E23E7A;   /* rosa   */
+    --grad:linear-gradient(90deg,var(--g1),var(--g2),var(--g3));
+    --verde:#2ED573;
+    --vermelho:#FF4757;
+    --r:18px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:
+      radial-gradient(900px 480px at 78% -12%, rgba(226,62,122,.14), transparent 62%),
+      radial-gradient(760px 420px at 8% -6%, rgba(255,194,74,.10), transparent 60%),
+      var(--bg);
+    color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Inter","SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+    font-size:15px;line-height:1.35;
+    padding-bottom:calc(28px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"lnum" 1}
+  .wrap{width:100%;max-width:480px;margin:0 auto;padding:0 16px}
+
+  /* ============ TOPO FIXO ============ */
+  header#top{
+    position:sticky;top:0;z-index:50;
+    background:linear-gradient(180deg,rgba(7,7,10,.97) 0%,rgba(7,7,10,.93) 72%,rgba(7,7,10,.72) 100%);
+    backdrop-filter:saturate(160%) blur(18px);
+    -webkit-backdrop-filter:saturate(160%) blur(18px);
+    border-bottom:1px solid var(--line);
+    padding-top:calc(env(safe-area-inset-top) + 10px);
+  }
+  .top-row{display:flex;align-items:center;gap:10px;padding:0 16px 8px}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+  .oc{width:38px;height:38px;flex:0 0 38px;display:block}
+  .brand-txt{display:flex;flex-direction:column;min-width:0;line-height:1.05}
+  .brand-txt b{font-size:13px;letter-spacing:.22em;font-weight:800;color:#fff}
+  .brand-txt span{
+    font-size:9.5px;letter-spacing:.19em;font-weight:700;margin-top:3px;
+    color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .live{
+    display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+    padding:7px 11px;border-radius:999px;
+    font-size:10px;font-weight:800;letter-spacing:.16em;
+    color:#0A0A0C;background:var(--grad);
+    box-shadow:0 0 0 1px rgba(255,255,255,.12) inset, 0 6px 22px -10px rgba(226,62,122,.9);
+    animation:livePulse 2.1s ease-in-out infinite;
+  }
+  .live i{width:6px;height:6px;border-radius:50%;background:#0A0A0C;display:block;animation:dotPulse 1.6s ease-in-out infinite}
+  .live.off{background:#1B1B22;color:var(--mut-2);animation:none;box-shadow:none}
+  .live.off i{background:var(--mut-2);animation:none}
+  @keyframes livePulse{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 0 0 0 rgba(255,194,74,.42)}55%{box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 0 0 7px rgba(255,194,74,0)}}
+  @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+  .top-sub{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 16px 9px;font-size:10px;letter-spacing:.1em;color:var(--mut-2);text-transform:uppercase}
+  .top-sub b{color:var(--txt-2);font-weight:700;letter-spacing:.08em}
+
+  #offline{
+    display:none;margin:0;padding:7px 16px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:#FFD9A8;background:linear-gradient(90deg,rgba(255,122,61,.16),rgba(226,62,122,.10));
+    border-bottom:1px solid rgba(255,122,61,.22);
+  }
+  #offline.on{display:block}
+
+  /* ============ HERO: TERMÔMETROS ============ */
+  .hero{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+  .painel{
+    position:relative;border-radius:var(--r);padding:15px 16px 13px;
+    background:linear-gradient(180deg,var(--card-2),var(--card));
+    border:1px solid var(--line);
+    transition:border-color .6s ease,box-shadow .6s ease,opacity .4s;
+  }
+  .painel.lead-down{border-color:rgba(255,71,87,.42);box-shadow:0 0 0 1px rgba(255,71,87,.10),0 18px 40px -30px rgba(226,62,122,.9)}
+  .painel.lead-up{border-color:rgba(46,213,115,.42);box-shadow:0 0 0 1px rgba(46,213,115,.10),0 18px 40px -30px rgba(46,213,115,.7)}
+  .painel-top{display:flex;align-items:center;gap:9px}
+  .avatar{
+    width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;
+    font-size:15px;background:#1E1E26;border:1px solid var(--line-2)
+  }
+  .who{flex:1;min-width:0}
+  .who b{display:block;font-size:14.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .who span{display:block;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-top:2px;font-weight:700}
+  .badge{
+    font-size:8.5px;letter-spacing:.14em;font-weight:800;text-transform:uppercase;
+    padding:4px 7px;border-radius:6px;color:#0A0A0C;background:var(--grad);white-space:nowrap
+  }
+  .badge-down{background:var(--vermelho);color:#fff}
+  .badge-up{background:var(--verde);color:#0A0A0C}
+  .painel-nums{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:11px}
+  .votes{font-size:31px;line-height:1;font-weight:800;letter-spacing:-.02em}
+  .votes .unit{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--mut-2);display:block;margin-top:5px}
+  .pct-box{text-align:right;flex:0 0 auto}
+  .pct{font-size:22px;font-weight:800;line-height:1;letter-spacing:-.01em}
+  .pct.down{color:var(--vermelho)}
+  .pct.up{color:var(--verde)}
+  .pct-box small{display:block;font-size:9px;letter-spacing:.14em;color:var(--mut-2);text-transform:uppercase;margin-top:4px;font-weight:700}
+  .bar{height:7px;border-radius:99px;background:rgba(255,255,255,.07);margin-top:12px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:99px;width:0%;transition:width .6s cubic-bezier(.22,.8,.24,1)}
+  .painel.down .bar > i{background:linear-gradient(90deg,#FF4757,#FF6B81)}
+  .painel.up .bar > i{background:linear-gradient(90deg,#2ED573,#7BED9F)}
+  .painel.flat .bar > i{background:var(--grad)}
+  .tag{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut-2);margin-top:6px;font-weight:700}
+
+  /* ============ CONTEXTO ============ */
+  .adv{
+    margin-top:12px;border-radius:var(--r);padding:15px 16px;
+    background:linear-gradient(135deg,rgba(255,194,74,.13),rgba(226,62,122,.09));
+    border:1px solid rgba(255,194,74,.26);
+  }
+  .adv-label{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  .adv-main{display:flex;align-items:flex-end;gap:11px;margin-top:8px}
+  .adv-pp{font-size:38px;line-height:.92;font-weight:800;letter-spacing:-.03em;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .adv-who{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-2);font-weight:800;padding-bottom:4px}
+  .adv-votes{margin-top:7px;font-size:12px;color:var(--mut);letter-spacing:.02em;line-height:1.55}
+  .adv-votes b{color:var(--txt);font-weight:800}
+
+  /* ============ CARD GENÉRICO ============ */
+  .card{
+    margin-top:12px;border-radius:var(--r);padding:15px 16px;
+    background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--line)
+  }
+  .card-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .card-h h2{margin:0;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  .card-h .big{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .big.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* ============ AGUARDANDO B3 ============ */
+  #waiting{
+    display:none;margin-top:12px;border-radius:var(--r);padding:22px 18px;text-align:center;
+    background:linear-gradient(180deg,var(--card-2),var(--card));border:1px dashed rgba(255,255,255,.14)
+  }
+  #waiting.on{display:block}
+  #waiting h2{margin:0;font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--txt)}
+  #waiting p{margin:8px 0 0;font-size:11.5px;color:var(--mut);letter-spacing:.05em;line-height:1.5}
+  .dots{display:flex;justify-content:center;gap:5px;margin-bottom:13px}
+  .dots i{width:5px;height:5px;border-radius:50%;background:var(--g1);opacity:.3;animation:blink 1.5s infinite}
+  .dots i:nth-child(2){background:var(--g2);animation-delay:.22s}
+  .dots i:nth-child(3){background:var(--g3);animation-delay:.44s}
+  @keyframes blink{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
+
+  /* ============ LISTA DE ATIVOS ============ */
+  .sec{margin-top:22px}
+  .sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .sec-h h2{margin:0;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  .sec-h span{font-size:10px;letter-spacing:.1em;color:var(--mut-2);text-transform:uppercase}
+  .sort{display:flex;gap:6px;margin-bottom:12px}
+  .sort button{
+    flex:1;min-height:44px;padding:0 8px;border-radius:12px;cursor:pointer;
+    background:rgba(255,255,255,.045);border:1px solid var(--line);color:var(--txt-2);
+    font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;
+    transition:background .25s,color .25s,border-color .25s;
+    font-family:inherit;-webkit-appearance:none;appearance:none
+  }
+  .sort button[aria-pressed="true"]{color:#0A0A0C;background:var(--grad);border-color:transparent}
+
+  ul#ativos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  li.uf{
+    border-radius:14px;padding:11px 13px;
+    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+    border:1px solid var(--line);
+  }
+  .uf-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .uf-id{display:flex;align-items:baseline;gap:7px;min-width:0}
+  .uf-sigla{font-size:14px;font-weight:800;letter-spacing:.1em}
+  .uf-nm{font-size:9px;letter-spacing:.13em;color:var(--mut-2);text-transform:uppercase;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .uf-pct{font-size:12.5px;font-weight:800;color:var(--txt)}
+  .uf-pct.down{color:var(--vermelho)}
+  .uf-pct.up{color:var(--verde)}
+  .uf-pct.flat{color:var(--mut)}
+  .uf-row{display:flex;gap:8px;margin-top:7px}
+  .mini{flex:1;min-width:0}
+  .mini.right{text-align:right}
+  .mini .nm{display:block;font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut-2);font-weight:800}
+  .mini .vv{display:flex;align-items:baseline;gap:6px;margin-top:3px}
+  .mini.right .vv{justify-content:flex-end}
+  .mini .v{font-size:13px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+  .mini .p{font-size:10.5px;font-weight:700;color:var(--mut)}
+
+  /* ============ SPARKLINE ============ */
+  .spark{width:100%;height:34px;display:block;margin-top:10px}
+  .spark polyline{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .spark .down{stroke:var(--vermelho)}
+  .spark .up{stroke:var(--verde)}
+  .spark .flat{stroke:var(--g2)}
+
+  /* ============ TOTAIS / CONTEXTO ELEIÇÃO ============ */
+  .totals{margin-top:22px;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;
+    background:linear-gradient(180deg,var(--card-2),var(--card))}
+  .totals h2{margin:0;padding:13px 16px 0;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  .t-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);margin-top:11px;border-top:1px solid var(--line)}
+  .t-cell{background:var(--card);padding:12px 16px}
+  .t-cell .k{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut-2);font-weight:800}
+  .t-cell .v{font-size:19px;font-weight:800;letter-spacing:-.01em;margin-top:3px}
+  .t-cell .d{font-size:10px;color:var(--mut);margin-top:2px}
+
+  /* ============ NOTÍCIAS ============ */
+  #news{margin-top:22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0;overflow:hidden}
+  #news .nw-head{display:flex;align-items:center;gap:8px;padding:0 16px 8px}
+  #news .nw-head h2{margin:0;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  #news .nw-head span{font-size:9px;letter-spacing:.1em;color:var(--mut-2);text-transform:uppercase}
+  .nw-run{display:flex;width:max-content;animation:nwScroll 90s linear infinite}
+  #news:hover .nw-run{animation-play-state:paused}
+  @keyframes nwScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .nw-i{display:inline-flex;align-items:center;gap:8px;padding:0 14px;font-size:11px;color:var(--txt-2);text-decoration:none;white-space:nowrap}
+  .nw-i.big .nw-t{color:#fff;font-weight:700}
+  .nw-k{font-size:8px;letter-spacing:.12em;font-weight:800;color:#0A0A0C;background:var(--grad);border-radius:4px;padding:2px 5px}
+  .nw-s{font-size:8.5px;letter-spacing:.1em;font-weight:800;color:var(--mut-2)}
+  .nw-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}
+
+  footer{
+    margin-top:26px;border-top:1px solid var(--line);
+    padding:18px 16px 6px;text-align:center;position:relative;
+  }
+  footer .f1{font-size:10px;letter-spacing:.08em;color:var(--mut);line-height:1.6}
+  footer .f2{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut-2);margin-top:6px;font-weight:800}
+  footer .ring{position:absolute;right:14px;top:14px;width:34px;height:34px;opacity:.5}
+
+  /* ============ RESPONSIVO / TV ============ */
+  @media(min-width:760px){
+    .wrap{max-width:760px}
+    .hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    ul#ativos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  }
+  body.tv .wrap{max-width:100%;padding:0 24px}
+  body.tv .hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  body.tv .votes{font-size:44px}
+  body.tv .pct{font-size:30px}
+  body.tv .adv-pp{font-size:52px}
+  body.tv .sec{margin-top:14px}
+  body.tv ul#ativos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  body.tv .spark{height:44px}
+  body.tv #news{margin-top:14px}
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div class="top-row">
+    <div class="brand">
+      <svg class="oc" viewBox="0 0 100 100" aria-hidden="true">
+        <defs><linearGradient id="ring1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#FFC24A"/><stop offset="52%" stop-color="#FF7A3D"/><stop offset="100%" stop-color="#E23E7A"/>
+        </linearGradient></defs>
+        <circle cx="50" cy="50" r="44" fill="none" stroke="url(#ring1)" stroke-width="7"/>
+        <circle cx="50" cy="50" r="16" fill="url(#ring1)"/>
+      </svg>
+      <div class="brand-txt">
+        <b>MERCADO</b>
+        <span>Reação à reeleição · 26/10/2026</span>
+      </div>
+    </div>
+    <span class="live" id="live"><i></i>AO VIVO</span>
+    <span class="top-sub" style="padding:0"><b id="clock">--:--</b> BRT</span>
+  </div>
+  <div class="top-sub" style="padding-top:0">
+    <span>Dados: <b>Yahoo Finance</b> · servidor</span>
+    <span id="ageData">—</span>
+  </div>
+  <div id="offline">Sem conexão — mostrando último dado recebido</div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ HERO: OS 4 TERMÔMETROS ============ -->
+  <section class="hero" id="hero"></section>
+
+  <!-- ============ CONTEXTO: O CHOQUE ============ -->
+  <section class="adv" id="adv">
+    <div class="adv-label">O CHOQUE DA REELEIÇÃO</div>
+    <div class="adv-main">
+      <div class="adv-pp num" id="advNum">—</div>
+      <div class="adv-who" id="advWho">carregando…</div>
+    </div>
+    <div class="adv-votes" id="advTxt">
+      <b>Lula reeleito</b> com 51,79% dos válidos (64,2 mi de votos) × Flávio 48,21% (59,8 mi) — resultado anunciado às <b>21h08 de ontem</b> pelo TSE. O resultado contrariou o mercado, que precificava vitória de Flávio após o 1º turno: bolsa despenca em NY, dólar futuro dispara e o foco agora é a equipe econômica e o Congresso.
+    </div>
+  </section>
+
+  <!-- ============ AGUARDANDO B3 ============ -->
+  <div id="waiting">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <h2>B3 ABRE ÀS 10H</h2>
+    <p>NY e CME já estão ao vivo — o Ibovespa entra no pregão às 10h de Brasília.</p>
+  </div>
+
+  <!-- ============ GRID DE ATIVOS ============ -->
+  <section class="sec">
+    <div class="sec-h">
+      <h2>Ativos em tempo real</h2>
+      <span id="updAt">—</span>
+    </div>
+    <div class="sort">
+      <button type="button" data-sort="mov" aria-pressed="true">Maior movimento</button>
+      <button type="button" data-sort="az" aria-pressed="false">A–Z</button>
+    </div>
+    <ul id="ativos"></ul>
+  </section>
+
+  <!-- ============ CONTEXTO DA ELEIÇÃO ============ -->
+  <section class="totals" aria-label="Contexto da eleição">
+    <h2>Contexto da eleição</h2>
+    <div class="t-grid">
+      <div class="t-cell"><div class="k">Lula (PT)</div><div class="v num">64.256.232</div><div class="d num">51,79% dos válidos</div></div>
+      <div class="t-cell"><div class="k">Flávio Bolsonaro (PL)</div><div class="v num">59.826.041</div><div class="d num">48,21% dos válidos</div></div>
+      <div class="t-cell"><div class="k">Anunciado</div><div class="v num">21h08</div><div class="d num">domingo 25/10 · TSE</div></div>
+      <div class="t-cell"><div class="k">Margem</div><div class="v num">4.430.191</div><div class="d num">3,58 p.p. de vantagem</div></div>
+    </div>
+  </section>
+
+  <!-- ============ NOTÍCIAS ============ -->
+  <section id="news" hidden>
+    <div class="nw-head">
+      <h2>Notícias — Brasil &amp; Mundo</h2>
+      <span id="nwAt">—</span>
+    </div>
+    <div class="nw-run" id="nwRun"></div>
+  </section>
+
+  <footer>
+    <div class="f1">Fonte: Yahoo Finance (via servidor) · cotações a cada 5 min<br>Notícias: RSS Brasil/Mundo · a cada 30 min</div>
+    <div class="f2">Página independente · não é recomendação de investimento</div>
+    <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="ring2" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFC24A"/><stop offset="52%" stop-color="#FF7A3D"/><stop offset="100%" stop-color="#E23E7A"/>
+      </linearGradient></defs>
+      <circle cx="50" cy="50" r="44" fill="none" stroke="url(#ring2)" stroke-width="5"/>
+    </svg>
+  </footer>
+</main>
+
+<script>
+/* =====================================================================
+   1. CONFIGURAÇÃO
+   ===================================================================== */
+const URL_DADOS = 'mercado.json';
+const URL_NEWS  = '../marcos/news.json';
+const CB = () => '?t=' + Date.now();
+
+const ATIVOS = {
+  ewz:    {nome:'EWZ · NY',      sub:'ETF do Ibovespa em Wall Street', avatar:'🇺🇸', dec:2, hero:true},
+  dolfut: {nome:'DÓLAR FUTURO',  sub:'CME Chicago · R$ por US$',       avatar:'💵', dec:4, hero:true},
+  usdbrl: {nome:'DÓLAR À VISTA', sub:'B3 · PTAX (fecha 17h)',          avatar:'🏦', dec:4, hero:true},
+  ibov:   {nome:'IBOVESPA',      sub:'B3 · abre 10h BRT',              avatar:'🇧🇷', dec:0, hero:true},
+  eurbrl: {nome:'EURO',          sub:'R$ por €',                       avatar:'🇪🇺', dec:4},
+  gold:   {nome:'OURO',          sub:'COMEX · US$/oz',                 avatar:'🥇', dec:1},
+  ust10y: {nome:'JUROS EUA 10Y', sub:'Futuro do Tesouro americano',    avatar:'📉', dec:3},
+  nikkei: {nome:'NIKKEI 225',    sub:'Tóquio · Ásia',                  avatar:'🇯🇵', dec:0},
+  dxy:    {nome:'DÓLAR INDEX',   sub:'DXY · força do dólar global',    avatar:'🌐', dec:2},
+  petr:   {nome:'PETROBRAS PN',  sub:'B3 · PETR4',                     avatar:'⛽', dec:2},
+  vale:   {nome:'VALE ON',       sub:'B3 · VALE3',                     avatar:'⛏️', dec:2},
+  btc:    {nome:'BITCOIN',       sub:'US$ · mercado global 24h',       avatar:'₿',  dec:0},
+};
+const HERO = ['ewz','dolfut','usdbrl','ibov'];
+
+/* =====================================================================
+   2. ESTADO
+   ===================================================================== */
+const S = { dados:null, news:null, offline:false, sort:'mov', busy:false };
+
+/* =====================================================================
+   3. UTILITÁRIOS
+   ===================================================================== */
+const nf0 = new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
+const nf2 = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const $ = id => document.getElementById(id);
+function nfFor(dec){
+  if (dec === 0) return nf0;
+  if (dec === 2) return nf2;
+  return new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function horaBrasilia(){
+  try{
+    return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date());
+  }catch(e){
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+}
+async function getJSON(url, ms = 12000){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try{
+    const r = await fetch(url, {cache:'no-store', signal:ctrl.signal, headers:{'Accept':'application/json'}});
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+function idadeMin(ts){ return ts ? Math.max(0, Math.round((Date.now()/1000 - ts)/60)) : null; }
+function idadeTxt(min){
+  if (min === null) return '—';
+  if (min < 1) return 'agora';
+  if (min < 60) return min + ' min';
+  return Math.floor(min/60) + 'h' + String(min%60).padStart(2,'0');
+}
+function idadeArquivo(dados){
+  if (!dados || !dados.at) return null;
+  return Math.round((Date.now() - new Date(dados.at).getTime())/60000);
+}
+/* texto da idade no topo: "atualizado agora" / "atualizado 3 min atrás" */
+function idadeTopo(min){
+  if (min === null) return '—';
+  if (min < 1) return 'atualizado agora';
+  return 'atualizado ' + idadeTxt(min) + ' atrás';
+}
+
+/* =====================================================================
+   4. RENDER
+   ===================================================================== */
+function corClasse(c){ return c > 0.05 ? 'up' : (c < -0.05 ? 'down' : 'flat'); }
+
+function spark(id, serie){
+  const el = $(id);
+  if (!el || !serie || serie.length < 2) return;
+  const mn = Math.min(...serie), mx = Math.max(...serie), rng = (mx - mn) || 1;
+  const pts = serie.map((v,i) => {
+    const x = (i/(serie.length-1))*100;
+    const y = 28 - ((v-mn)/rng)*26;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  const cor = serie[serie.length-1] < serie[0] ? 'down' : 'up';
+  el.innerHTML = '<polyline class="'+cor+'" points="'+pts+'"/>';
+}
+
+function heroCard(id){
+  const c = ATIVOS[id];
+  return '<div class="painel" id="p-'+id+'">'+
+    '<div class="painel-top">'+
+      '<div class="avatar">'+c.avatar+'</div>'+
+      '<div class="who"><b>'+c.nome+'</b><span>'+c.sub+'</span></div>'+
+      '<span class="badge" id="b-'+id+'">—</span>'+
+    '</div>'+
+    '<div class="painel-nums">'+
+      '<div class="votes num" id="v-'+id+'">—</div>'+
+      '<div class="pct-box"><div class="pct num" id="c-'+id+'">—</div><small>vs. fechamento</small></div>'+
+    '</div>'+
+    '<div class="bar"><i id="bar-'+id+'" style="width:0%"></i></div>'+
+    '<div class="tag" id="tag-'+id+'"></div>'+
+    '<svg class="spark" id="sp-'+id+'" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>'+
+  '</div>';
+}
+
+function renderHero(){
+  if (!S.dados) return;
+  const itens = S.dados.itens;
+  /* B3 fechada: Ibovespa/PETR/VALE mostram fechamento de sexta (17h) —
+     selo FECHADO em vez de cara de "ao vivo" */
+  const agora = Date.now()/1000;
+  for (const id of HERO){
+    const it = itens[id], card = $('p-'+id);
+    if (!it || it.p == null){
+      if (card){
+        card.style.opacity = .45;
+        const t = $('tag-'+id);
+        if (t) t.textContent = 'sem dado ainda';
+      }
+      continue;
+    }
+    card.style.opacity = 1;
+    const nf = nfFor(ATIVOS[id].dec);
+    $('v-'+id).textContent = nf.format(it.p);
+    const pct = $('c-'+id);
+    pct.textContent = (it.c > 0 ? '+' : '') + nf2.format(it.c) + '%';
+    pct.className = 'pct num ' + corClasse(it.c);
+    const b = $('b-'+id);
+    const fechado = it.t && (agora - it.t) > 20*3600;   /* >20h = fechamento antigo */
+    b.textContent = fechado ? 'FECHADO' : (it.c < -0.05 ? '↓ QUEDA' : (it.c > 0.05 ? '↑ ALTA' : '→ ESTÁVEL'));
+    b.className = 'badge ' + (fechado ? '' : (it.c < -0.05 ? 'badge-down' : (it.c > 0.05 ? 'badge-up' : '')));
+    $('bar-'+id).style.width = Math.min(100, Math.abs(it.c)*5) + '%';
+    card.className = 'painel ' + corClasse(it.c);
+    if (it.s && it.s.length > 1) spark('sp-'+id, it.s);
+    const tag = $('tag-'+id);
+    const im = idadeMin(it.t);
+    tag.textContent = fechado ? 'fechamento de sexta · reabre 10h'
+      : ((im !== null && im > 10) ? 'dado de ' + idadeTxt(im) + ' atrás' : 'ao vivo');
+  }
+}
+
+function renderLista(){
+  if (!S.dados) return;
+  const itens = S.dados.itens;
+  const arr = Object.keys(ATIVOS).filter(id => !ATIVOS[id].hero).map(id => Object.assign({id}, itens[id] || {}));
+  if (S.sort === 'mov') arr.sort((a,b) => Math.abs(b.c||0) - Math.abs(a.c||0));
+  else arr.sort((a,b) => ATIVOS[a.id].nome.localeCompare(ATIVOS[b.id].nome));
+  const agoraTs = Date.now()/1000;
+  $('ativos').innerHTML = arr.map(it => {
+    const cfg = ATIVOS[it.id];
+    const sem = it.p == null;
+    const nf = nfFor(cfg.dec);
+    const fechado = it.t && (agoraTs - it.t) > 20*3600;
+    const cor = sem ? 'flat' : corClasse(it.c||0);
+    const pctTxt = sem ? '—' : (it.c > 0 ? '+' : '') + nf2.format(it.c||0) + '%';
+    const im = idadeMin(it.t);
+    const idade = sem ? '' : (fechado ? ' · fechamento de sexta' : ((im !== null && im > 10) ? ' · ' + idadeTxt(im) + ' atrás' : ' · ao vivo'));
+    return '<li class="uf">'+
+      '<div class="uf-top">'+
+        '<div class="uf-id">'+
+          '<span class="uf-sigla">'+cfg.avatar+' '+cfg.nome+'</span>'+
+          '<span class="uf-nm">'+cfg.sub+idade+'</span>'+
+        '</div>'+
+        '<span class="uf-pct '+cor+'">'+pctTxt+'</span>'+
+      '</div>'+
+      '<div class="uf-row">'+
+        '<div class="mini"><span class="nm">Valor</span>'+
+          '<span class="vv"><span class="v num">'+(sem ? '—' : nf.format(it.p))+'</span></span></div>'+
+        '<div class="mini right"><span class="nm">vs. fechamento</span>'+
+          '<span class="vv"><span class="p num">'+pctTxt+'</span></span></div>'+
+      '</div>'+
+    '</li>';
+  }).join('');
+}
+
+function renderAdv(){
+  if (!S.dados) return;
+  const ewz = S.dados.itens.ewz, dolfut = S.dados.itens.dolfut;
+  if (ewz && ewz.p != null){
+    $('advNum').textContent = nf2.format(Math.abs(ewz.c)) + '%';
+    $('advWho').textContent = 'queda do EWZ em NY (pré-mercado)';
+  } else if (dolfut && dolfut.p != null){
+    $('advNum').textContent = nf2.format(Math.abs(dolfut.c)) + '%';
+    $('advWho').textContent = 'movimento do dólar futuro (CME)';
+  }
+}
+
+function renderNews(){
+  if (!S.news || !S.news.items || !S.news.items.length){ $('news').hidden = true; return; }
+  $('news').hidden = false;
+  const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const its = S.news.items.slice(0, 24);
+  const html = its.map((i, idx) => {
+    const grande = idx === 0 ? ' big' : '';
+    return '<a class="nw-i'+grande+'" href="'+esc(i.u)+'" target="_blank" rel="noopener noreferrer">'+
+      '<span class="nw-k">'+(i.k === 'BR' ? 'BRASIL' : 'MUNDO')+'</span>'+
+      '<span class="nw-s">'+esc(i.s)+'</span>'+
+      '<span class="nw-t">'+esc(i.t)+'</span></a>';
+  }).join('');
+  $('nwRun').innerHTML = html + html;
+  const d = new Date(S.news.at);
+  $('nwAt').textContent = 'atualizado ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderIdade(){
+  const im = idadeArquivo(S.dados);
+  const el = $('ageData');
+  if (im !== null){
+    el.textContent = idadeTopo(im);
+    el.style.color = im > 30 ? '#FF4757' : (im > 15 ? '#FF7A3D' : '');
+  }
+  $('clock').textContent = horaBrasilia();
+}
+
+function setOffline(on){
+  S.offline = on;
+  $('offline').classList.toggle('on', on);
+  $('live').classList.toggle('off', on);
+}
+
+/* =====================================================================
+   5. POLLING — mercado.json 60s (servidor renova 5 min) · news 5 min
+   ===================================================================== */
+async function pollDados(){
+  if (S.busy) return;
+  S.busy = true;
+  try{
+    const d = await getJSON(URL_DADOS + CB());
+    if (d && d.itens){
+      S.dados = d;
+      S.offline = false;
+      setOffline(false);
+      renderHero(); renderLista(); renderAdv(); renderIdade();
+    }
+  }catch(e){ setOffline(true); }
+  S.busy = false;
+}
+async function pollNews(){
+  try{
+    const d = await getJSON(URL_NEWS + CB());
+    if (d && d.items){ S.news = d; renderNews(); }
+  }catch(e){ /* faixa simplesmente não aparece */ }
+}
+
+/* =====================================================================
+   6. SORT + BOOT
+   ===================================================================== */
+document.querySelectorAll('.sort button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.sort button').forEach(x => x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    S.sort = b.dataset.sort;
+    renderLista();
+  });
+});
+
+(async function boot(){
+  $('hero').innerHTML = HERO.map(heroCard).join('');
+  renderIdade();
+  setInterval(renderIdade, 30000);
+  await pollDados();
+  pollNews();
+  setInterval(pollDados, 60000);
+  setInterval(pollNews, 300000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden){ pollDados(); pollNews(); }
+  });
+})();
+</script>
+</body>
+</html>
