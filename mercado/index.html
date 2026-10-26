@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <!-- =====================================================================
-     MERCADO — REAÇÃO À REELEIÇÃO DO LULA (26/10/2026)
+     MERCADO + JUROS — painel de apoio à venda de consórcio
      Arquivo único, sem framework, sem backend.
-     Consome mercado/mercado.json (gerado no servidor, cron 5 min, Yahoo
-     Finance) + ../marcos/news.json (RSS Brasil/Mundo, cron 30 min).
 
-     Yahoo Finance não tem CORS: o servidor busca as cotações e publica o
-     JSON aqui; o painel faz polling com cache-buster. Nada é inventado:
-     ativo sem dado mostra "—" e a idade do dado fica visível no cartão.
+     ABAS: MERCADO (cotações) · SELIC & IPCA · CONSÓRCIO × FINANCIAMENTO · ELEIÇÃO
 
-     DESIGN: mesmo visual do painel APURAÇÃO PRESIDENTE OCHURCH (25/10):
-     preto profundo, anel degradê âmbar→laranja→rosa, cards escuros,
-     tipografia tabular, selo AO VIVO pulsante.
+     FONTES (nada é inventado; sem dado = "—"):
+       mercado.json      Yahoo Finance via servidor   (cron 5 min)
+       indicadores.json  API SGS do Banco Central     (cron 30 min)
+       news.json         RSS Brasil/Mundo             (cron 30 min)
+
+     DESIGN: painel APURAÇÃO PRESIDENTE OCHURCH (25/10): preto profundo,
+     anel degradê âmbar→laranja→rosa, cards escuros, tipografia tabular.
      --------------------------------------------------------------------- -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,26 +26,15 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>MERCADO — REAÇÃO À REELEIÇÃO</title>
+<title>MERCADO — JUROS &amp; VENDA</title>
 <style>
   :root{
-    --bg:#07070A;
-    --bg-2:#0B0B10;
-    --card:#101014;
-    --card-2:#15151B;
-    --line:rgba(255,255,255,.085);
-    --line-2:rgba(255,255,255,.16);
-    --txt:#F6F6F8;
-    --txt-2:#C9C9D2;
-    --mut:#8A8A96;
-    --mut-2:#5F5F6B;
-    --g1:#FFC24A;   /* âmbar  */
-    --g2:#FF7A3D;   /* laranja */
-    --g3:#E23E7A;   /* rosa   */
+    --bg:#07070A; --bg-2:#0B0B10; --card:#101014; --card-2:#15151B;
+    --line:rgba(255,255,255,.085); --line-2:rgba(255,255,255,.16);
+    --txt:#F6F6F8; --txt-2:#C9C9D2; --mut:#8A8A96; --mut-2:#5F5F6B;
+    --g1:#FFC24A; --g2:#FF7A3D; --g3:#E23E7A;
     --grad:linear-gradient(90deg,var(--g1),var(--g2),var(--g3));
-    --verde:#2ED573;
-    --vermelho:#FF4757;
-    --r:18px;
+    --verde:#2ED573; --vermelho:#FF4757; --r:18px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
@@ -64,49 +53,57 @@
   .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"lnum" 1}
   .wrap{width:100%;max-width:480px;margin:0 auto;padding:0 16px}
 
-  /* ============ TOPO FIXO ============ */
+  /* ============ TOPO FIXO + ABAS ============ */
   header#top{
     position:sticky;top:0;z-index:50;
-    background:linear-gradient(180deg,rgba(7,7,10,.97) 0%,rgba(7,7,10,.93) 72%,rgba(7,7,10,.72) 100%);
+    background:linear-gradient(180deg,rgba(7,7,10,.98) 0%,rgba(7,7,10,.94) 78%,rgba(7,7,10,.82) 100%);
     backdrop-filter:saturate(160%) blur(18px);
     -webkit-backdrop-filter:saturate(160%) blur(18px);
     border-bottom:1px solid var(--line);
-    padding-top:calc(env(safe-area-inset-top) + 10px);
+    padding-top:calc(env(safe-area-inset-top) + 8px);
   }
-  .top-row{display:flex;align-items:center;gap:10px;padding:0 16px 8px}
+  .top-row{display:flex;align-items:center;gap:10px;padding:0 16px 7px}
   .brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-  .oc{width:38px;height:38px;flex:0 0 38px;display:block}
+  .oc{width:34px;height:34px;flex:0 0 34px;display:block}
   .brand-txt{display:flex;flex-direction:column;min-width:0;line-height:1.05}
-  .brand-txt b{font-size:13px;letter-spacing:.22em;font-weight:800;color:#fff}
-  .brand-txt span{
-    font-size:9.5px;letter-spacing:.19em;font-weight:700;margin-top:3px;
-    color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
+  .brand-txt b{font-size:12.5px;letter-spacing:.22em;font-weight:800;color:#fff}
+  .brand-txt span{font-size:9px;letter-spacing:.18em;font-weight:700;margin-top:3px;
+    color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .live{
-    display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
-    padding:7px 11px;border-radius:999px;
-    font-size:10px;font-weight:800;letter-spacing:.16em;
+    display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;
+    padding:6px 10px;border-radius:999px;
+    font-size:9.5px;font-weight:800;letter-spacing:.14em;
     color:#0A0A0C;background:var(--grad);
     box-shadow:0 0 0 1px rgba(255,255,255,.12) inset, 0 6px 22px -10px rgba(226,62,122,.9);
     animation:livePulse 2.1s ease-in-out infinite;
   }
-  .live i{width:6px;height:6px;border-radius:50%;background:#0A0A0C;display:block;animation:dotPulse 1.6s ease-in-out infinite}
+  .live i{width:5px;height:5px;border-radius:50%;background:#0A0A0C;display:block;animation:dotPulse 1.6s ease-in-out infinite}
   .live.off{background:#1B1B22;color:var(--mut-2);animation:none;box-shadow:none}
   .live.off i{background:var(--mut-2);animation:none}
   @keyframes livePulse{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 0 0 0 rgba(255,194,74,.42)}55%{box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 0 0 7px rgba(255,194,74,0)}}
   @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.25}}
 
-  .top-sub{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 16px 9px;font-size:10px;letter-spacing:.1em;color:var(--mut-2);text-transform:uppercase}
-  .top-sub b{color:var(--txt-2);font-weight:700;letter-spacing:.08em}
-
-  #offline{
-    display:none;margin:0;padding:7px 16px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
-    color:#FFD9A8;background:linear-gradient(90deg,rgba(255,122,61,.16),rgba(226,62,122,.10));
-    border-bottom:1px solid rgba(255,122,61,.22);
+  nav#tabs{display:flex;gap:6px;padding:0 16px 9px;overflow-x:auto;scrollbar-width:none}
+  nav#tabs::-webkit-scrollbar{display:none}
+  nav#tabs button{
+    flex:0 0 auto;min-height:38px;padding:0 13px;border-radius:11px;cursor:pointer;
+    background:rgba(255,255,255,.045);border:1px solid var(--line);color:var(--txt-2);
+    font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;
+    transition:background .25s,color .25s,border-color .25s;
+    font-family:inherit;-webkit-appearance:none;appearance:none;white-space:nowrap;
   }
+  nav#tabs button[aria-selected="true"]{color:#0A0A0C;background:var(--grad);border-color:transparent}
+
+  #offline{display:none;margin:0;padding:7px 16px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:#FFD9A8;background:linear-gradient(90deg,rgba(255,122,61,.16),rgba(226,62,122,.10));
+    border-bottom:1px solid rgba(255,122,61,.22)}
   #offline.on{display:block}
 
-  /* ============ HERO: TERMÔMETROS ============ */
+  .aba{display:none}
+  .aba.on{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* ============ HERO ============ */
   .hero{display:flex;flex-direction:column;gap:10px;margin-top:14px}
   .painel{
     position:relative;border-radius:var(--r);padding:15px 16px 13px;
@@ -117,27 +114,25 @@
   .painel.lead-down{border-color:rgba(255,71,87,.42);box-shadow:0 0 0 1px rgba(255,71,87,.10),0 18px 40px -30px rgba(226,62,122,.9)}
   .painel.lead-up{border-color:rgba(46,213,115,.42);box-shadow:0 0 0 1px rgba(46,213,115,.10),0 18px 40px -30px rgba(46,213,115,.7)}
   .painel-top{display:flex;align-items:center;gap:9px}
-  .avatar{
-    width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;
-    font-size:15px;background:#1E1E26;border:1px solid var(--line-2)
-  }
+  .avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;
+    font-size:15px;background:#1E1E26;border:1px solid var(--line-2)}
   .who{flex:1;min-width:0}
-  .who b{display:block;font-size:14.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .who span{display:block;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-top:2px;font-weight:700}
-  .badge{
-    font-size:8.5px;letter-spacing:.14em;font-weight:800;text-transform:uppercase;
-    padding:4px 7px;border-radius:6px;color:#0A0A0C;background:var(--grad);white-space:nowrap
-  }
+  .who b{display:block;font-size:14.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .who span{display:block;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--mut);margin-top:2px;font-weight:700}
+  .badge{font-size:8.5px;letter-spacing:.14em;font-weight:800;text-transform:uppercase;
+    padding:4px 7px;border-radius:6px;color:#0A0A0C;background:var(--grad);white-space:nowrap}
   .badge-down{background:var(--vermelho);color:#fff}
   .badge-up{background:var(--verde);color:#0A0A0C}
   .painel-nums{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:11px}
   .votes{font-size:31px;line-height:1;font-weight:800;letter-spacing:-.02em}
-  .votes .unit{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--mut-2);display:block;margin-top:5px}
   .pct-box{text-align:right;flex:0 0 auto}
   .pct{font-size:22px;font-weight:800;line-height:1;letter-spacing:-.01em}
   .pct.down{color:var(--vermelho)}
   .pct.up{color:var(--verde)}
-  .pct-box small{display:block;font-size:9px;letter-spacing:.14em;color:var(--mut-2);text-transform:uppercase;margin-top:4px;font-weight:700}
+  .pct-box small{display:block;font-size:9px;letter-spacing:.14em;color:var(--mut-2);
+    text-transform:uppercase;margin-top:4px;font-weight:700}
   .bar{height:7px;border-radius:99px;background:rgba(255,255,255,.07);margin-top:12px;overflow:hidden}
   .bar > i{display:block;height:100%;border-radius:99px;width:0%;transition:width .6s cubic-bezier(.22,.8,.24,1)}
   .painel.down .bar > i{background:linear-gradient(90deg,#FF4757,#FF6B81)}
@@ -145,69 +140,42 @@
   .painel.flat .bar > i{background:var(--grad)}
   .tag{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut-2);margin-top:6px;font-weight:700}
 
-  /* ============ CONTEXTO ============ */
-  .adv{
-    margin-top:12px;border-radius:var(--r);padding:15px 16px;
+  /* ============ CARDS ============ */
+  .card{margin-top:12px;border-radius:var(--r);padding:15px 16px;
+    background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--line)}
+  .adv{margin-top:12px;border-radius:var(--r);padding:15px 16px;
     background:linear-gradient(135deg,rgba(255,194,74,.13),rgba(226,62,122,.09));
-    border:1px solid rgba(255,194,74,.26);
-  }
+    border:1px solid rgba(255,194,74,.26)}
   .adv-label{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
   .adv-main{display:flex;align-items:flex-end;gap:11px;margin-top:8px}
   .adv-pp{font-size:38px;line-height:.92;font-weight:800;letter-spacing:-.03em;
     background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .adv-who{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-2);font-weight:800;padding-bottom:4px}
+  .adv-who{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-2);
+    font-weight:800;padding-bottom:4px}
   .adv-votes{margin-top:7px;font-size:12px;color:var(--mut);letter-spacing:.02em;line-height:1.55}
   .adv-votes b{color:var(--txt);font-weight:800}
 
-  /* ============ CARD GENÉRICO ============ */
-  .card{
-    margin-top:12px;border-radius:var(--r);padding:15px 16px;
-    background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--line)
-  }
-  .card-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-  .card-h h2{margin:0;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
-  .card-h .big{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1}
-  .big.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-
-  /* ============ AGUARDANDO B3 ============ */
-  #waiting{
-    display:none;margin-top:12px;border-radius:var(--r);padding:22px 18px;text-align:center;
-    background:linear-gradient(180deg,var(--card-2),var(--card));border:1px dashed rgba(255,255,255,.14)
-  }
-  #waiting.on{display:block}
-  #waiting h2{margin:0;font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--txt)}
-  #waiting p{margin:8px 0 0;font-size:11.5px;color:var(--mut);letter-spacing:.05em;line-height:1.5}
-  .dots{display:flex;justify-content:center;gap:5px;margin-bottom:13px}
-  .dots i{width:5px;height:5px;border-radius:50%;background:var(--g1);opacity:.3;animation:blink 1.5s infinite}
-  .dots i:nth-child(2){background:var(--g2);animation-delay:.22s}
-  .dots i:nth-child(3){background:var(--g3);animation-delay:.44s}
-  @keyframes blink{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
-
-  /* ============ LISTA DE ATIVOS ============ */
   .sec{margin-top:22px}
   .sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
   .sec-h h2{margin:0;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
   .sec-h span{font-size:10px;letter-spacing:.1em;color:var(--mut-2);text-transform:uppercase}
   .sort{display:flex;gap:6px;margin-bottom:12px}
-  .sort button{
-    flex:1;min-height:44px;padding:0 8px;border-radius:12px;cursor:pointer;
+  .sort button{flex:1;min-height:42px;padding:0 8px;border-radius:12px;cursor:pointer;
     background:rgba(255,255,255,.045);border:1px solid var(--line);color:var(--txt-2);
     font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;
     transition:background .25s,color .25s,border-color .25s;
-    font-family:inherit;-webkit-appearance:none;appearance:none
-  }
+    font-family:inherit;-webkit-appearance:none;appearance:none}
   .sort button[aria-pressed="true"]{color:#0A0A0C;background:var(--grad);border-color:transparent}
 
   ul#ativos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-  li.uf{
-    border-radius:14px;padding:11px 13px;
+  li.uf{border-radius:14px;padding:11px 13px;
     background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
-    border:1px solid var(--line);
-  }
+    border:1px solid var(--line)}
   .uf-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .uf-id{display:flex;align-items:baseline;gap:7px;min-width:0}
   .uf-sigla{font-size:14px;font-weight:800;letter-spacing:.1em}
-  .uf-nm{font-size:9px;letter-spacing:.13em;color:var(--mut-2);text-transform:uppercase;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .uf-nm{font-size:9px;letter-spacing:.13em;color:var(--mut-2);text-transform:uppercase;
+    font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .uf-pct{font-size:12.5px;font-weight:800;color:var(--txt)}
   .uf-pct.down{color:var(--vermelho)}
   .uf-pct.up{color:var(--verde)}
@@ -215,66 +183,139 @@
   .uf-row{display:flex;gap:8px;margin-top:7px}
   .mini{flex:1;min-width:0}
   .mini.right{text-align:right}
-  .mini .nm{display:block;font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut-2);font-weight:800}
+  .mini .nm{display:block;font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--mut-2);font-weight:800}
   .mini .vv{display:flex;align-items:baseline;gap:6px;margin-top:3px}
   .mini.right .vv{justify-content:flex-end}
   .mini .v{font-size:13px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
   .mini .p{font-size:10.5px;font-weight:700;color:var(--mut)}
 
-  /* ============ SPARKLINE ============ */
-  .spark{width:100%;height:34px;display:block;margin-top:10px}
-  .spark polyline{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
-  .spark .down{stroke:var(--vermelho)}
-  .spark .up{stroke:var(--verde)}
-  .spark .flat{stroke:var(--g2)}
+  /* ============ INDICADORES ============ */
+  .ind{position:relative;border-radius:var(--r);padding:14px 16px 12px;margin-top:10px;
+    background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--line)}
+  .ind-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .ind-nome{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);font-weight:800}
+  .ind-ref{font-size:8.5px;letter-spacing:.1em;color:var(--mut-2);text-transform:uppercase;
+    font-weight:700;margin-top:3px}
+  .ind-val{font-size:34px;font-weight:800;letter-spacing:-.025em;line-height:1;margin-top:8px}
+  .ind-val small{font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--mut);margin-left:3px}
+  .ind-val.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .ind-val.alerta{color:var(--vermelho)}
+  .ind-sub{font-size:11.5px;color:var(--mut);margin-top:7px;line-height:1.5;letter-spacing:.01em}
+  .ind-sub b{color:var(--txt-2);font-weight:800}
+  .ind-spark{width:100%;height:38px;display:block;margin-top:8px}
+  .ind-spark polyline{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;stroke:var(--g2)}
 
-  /* ============ TOTAIS / CONTEXTO ELEIÇÃO ============ */
+  /* ============ COMPARADOR ============ */
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .vs-col{border-radius:14px;padding:13px 12px;border:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012))}
+  .vs-col.ruim{border-color:rgba(255,71,87,.34);background:linear-gradient(180deg,rgba(255,71,87,.10),rgba(255,71,87,.03))}
+  .vs-col.bom{border-color:rgba(46,213,115,.34);background:linear-gradient(180deg,rgba(46,213,115,.10),rgba(46,213,115,.03))}
+  .vs-t{font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--mut)}
+  .vs-col.ruim .vs-t{color:#FF8A94}
+  .vs-col.bom .vs-t{color:#7BED9F}
+  .vs-v{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:7px;line-height:1}
+  .vs-col.ruim .vs-v{color:var(--vermelho)}
+  .vs-col.bom .vs-v{color:var(--verde)}
+  .vs-d{font-size:9.5px;color:var(--mut);margin-top:5px;letter-spacing:.02em;line-height:1.4}
+
+  .slider-box{margin-top:12px}
+  input[type=range]{width:100%;height:34px;background:transparent;-webkit-appearance:none;
+    appearance:none;cursor:pointer}
+  input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:rgba(255,255,255,.10)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;
+    border-radius:50%;background:var(--g1);border:3px solid #0A0A0C;margin-top:-10px;
+    box-shadow:0 2px 12px rgba(255,194,74,.55)}
+  input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:rgba(255,255,255,.10)}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--g1);
+    border:3px solid #0A0A0C;box-shadow:0 2px 12px rgba(255,194,74,.55)}
+  .escolhas{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .escolhas button{flex:0 0 auto;min-height:36px;padding:0 11px;border-radius:10px;cursor:pointer;
+    background:rgba(255,255,255,.045);border:1px solid var(--line);color:var(--txt-2);
+    font-size:10.5px;font-weight:800;letter-spacing:.03em;font-family:inherit;
+    -webkit-appearance:none;appearance:none}
+  .escolhas button[aria-pressed="true"]{color:#0A0A0C;background:var(--grad);border-color:transparent}
+
+  .valor-destaque{text-align:center;margin-top:6px}
+  .valor-destaque .k{font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--mut-2);font-weight:800}
+  .valor-destaque .v{font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:4px;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .economia{margin-top:12px;border-radius:14px;padding:14px 15px;text-align:center;
+    background:linear-gradient(135deg,rgba(46,213,115,.14),rgba(46,213,115,.05));
+    border:1px solid rgba(46,213,115,.32)}
+  .economia .k{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#7BED9F;font-weight:800}
+  .economia .v{font-size:32px;font-weight:800;letter-spacing:-.025em;margin-top:5px;color:var(--verde)}
+  .economia .d{font-size:10px;color:var(--mut);margin-top:5px;letter-spacing:.02em}
+
+  .tab-detalhe{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+  .linha{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:7px 0;
+    font-size:11.5px;letter-spacing:.02em;border-bottom:1px solid rgba(255,255,255,.045)}
+  .linha:last-child{border-bottom:none}
+  .linha span{color:var(--mut)}
+  .linha b{color:var(--txt);font-weight:800;white-space:nowrap}
+
+  .aviso{margin-top:12px;border-radius:12px;padding:11px 13px;font-size:10.5px;line-height:1.55;
+    color:var(--mut);background:rgba(255,255,255,.03);border:1px solid var(--line);letter-spacing:.01em}
+  .aviso b{color:var(--txt-2)}
+
+  .arg{margin-top:10px;border-radius:12px;padding:12px 13px;
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+    border:1px solid var(--line)}
+  .arg p{margin:0;font-size:12.5px;line-height:1.6;color:var(--txt-2);letter-spacing:.01em}
+  .arg .copiar{margin-top:9px;width:100%;min-height:38px;border-radius:9px;cursor:pointer;
+    background:rgba(255,255,255,.06);border:1px solid var(--line-2);color:var(--txt);
+    font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;font-family:inherit}
+  .arg .copiar.ok{background:rgba(46,213,115,.18);border-color:rgba(46,213,115,.45);color:#7BED9F}
+
+  /* ============ TOTAIS ============ */
   .totals{margin-top:22px;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;
     background:linear-gradient(180deg,var(--card-2),var(--card))}
-  .totals h2{margin:0;padding:13px 16px 0;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
-  .t-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);margin-top:11px;border-top:1px solid var(--line)}
+  .totals h2{margin:0;padding:13px 16px 0;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--txt-2);font-weight:800}
+  .t-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+    margin-top:11px;border-top:1px solid var(--line)}
   .t-cell{background:var(--card);padding:12px 16px}
   .t-cell .k{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut-2);font-weight:800}
   .t-cell .v{font-size:19px;font-weight:800;letter-spacing:-.01em;margin-top:3px}
   .t-cell .d{font-size:10px;color:var(--mut);margin-top:2px}
 
   /* ============ NOTÍCIAS ============ */
-  #news{margin-top:22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0;overflow:hidden}
+  #news{margin-top:22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:10px 0;overflow:hidden}
   #news .nw-head{display:flex;align-items:center;gap:8px;padding:0 16px 8px}
-  #news .nw-head h2{margin:0;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-2);font-weight:800}
+  #news .nw-head h2{margin:0;font-size:9.8px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--txt-2);font-weight:800}
   #news .nw-head span{font-size:9px;letter-spacing:.1em;color:var(--mut-2);text-transform:uppercase}
   .nw-run{display:flex;width:max-content;animation:nwScroll 90s linear infinite}
   #news:hover .nw-run{animation-play-state:paused}
   @keyframes nwScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  .nw-i{display:inline-flex;align-items:center;gap:8px;padding:0 14px;font-size:11px;color:var(--txt-2);text-decoration:none;white-space:nowrap}
+  .nw-i{display:inline-flex;align-items:center;gap:8px;padding:0 14px;font-size:11px;
+    color:var(--txt-2);text-decoration:none;white-space:nowrap}
   .nw-i.big .nw-t{color:#fff;font-weight:700}
-  .nw-k{font-size:8px;letter-spacing:.12em;font-weight:800;color:#0A0A0C;background:var(--grad);border-radius:4px;padding:2px 5px}
+  .nw-k{font-size:8px;letter-spacing:.12em;font-weight:800;color:#0A0A0C;background:var(--grad);
+    border-radius:4px;padding:2px 5px}
   .nw-s{font-size:8.5px;letter-spacing:.1em;font-weight:800;color:var(--mut-2)}
   .nw-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}
 
-  footer{
-    margin-top:26px;border-top:1px solid var(--line);
-    padding:18px 16px 6px;text-align:center;position:relative;
-  }
+  footer{margin-top:26px;border-top:1px solid var(--line);padding:18px 16px 6px;
+    text-align:center;position:relative}
   footer .f1{font-size:10px;letter-spacing:.08em;color:var(--mut);line-height:1.6}
-  footer .f2{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut-2);margin-top:6px;font-weight:800}
+  footer .f2{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut-2);
+    margin-top:6px;font-weight:800}
   footer .ring{position:absolute;right:14px;top:14px;width:34px;height:34px;opacity:.5}
 
-  /* ============ RESPONSIVO / TV ============ */
+  .spark{width:100%;height:34px;display:block;margin-top:10px}
+  .spark polyline{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .spark .down{stroke:var(--vermelho)}
+  .spark .up{stroke:var(--verde)}
+
   @media(min-width:760px){
     .wrap{max-width:760px}
     .hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     ul#ativos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   }
-  body.tv .wrap{max-width:100%;padding:0 24px}
-  body.tv .hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  body.tv .votes{font-size:44px}
-  body.tv .pct{font-size:30px}
-  body.tv .adv-pp{font-size:52px}
-  body.tv .sec{margin-top:14px}
-  body.tv ul#ativos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  body.tv .spark{height:44px}
-  body.tv #news{margin-top:14px}
 </style>
 </head>
 <body>
@@ -291,68 +332,163 @@
       </svg>
       <div class="brand-txt">
         <b>MERCADO</b>
-        <span>Reação à reeleição · 26/10/2026</span>
+        <span id="brandSub">Juros, bolsa e venda de consórcio</span>
       </div>
     </div>
     <span class="live" id="live"><i></i>AO VIVO</span>
-    <span class="top-sub" style="padding:0"><b id="clock">--:--</b> BRT</span>
+    <b id="clock" class="num" style="font-size:11px;letter-spacing:.1em;color:var(--txt-2);flex:0 0 auto">--:--</b>
   </div>
-  <div class="top-sub" style="padding-top:0">
-    <span>Dados: <b>Yahoo Finance</b> · servidor</span>
-    <span id="ageData">—</span>
-  </div>
+  <nav id="tabs" role="tablist">
+    <button role="tab" data-aba="mercado" aria-selected="true">Mercado</button>
+    <button role="tab" data-aba="juros" aria-selected="false">Selic &amp; IPCA</button>
+    <button role="tab" data-aba="venda" aria-selected="false">Consórcio × Financiamento</button>
+    <button role="tab" data-aba="eleicao" aria-selected="false">Eleição</button>
+  </nav>
   <div id="offline">Sem conexão — mostrando último dado recebido</div>
 </header>
 
 <main class="wrap">
 
-  <!-- ============ HERO: OS 4 TERMÔMETROS ============ -->
-  <section class="hero" id="hero"></section>
+  <!-- ================= ABA 1: MERCADO ================= -->
+  <section class="aba on" id="aba-mercado" role="tabpanel">
+    <section class="hero" id="hero"></section>
 
-  <!-- ============ CONTEXTO: O CHOQUE ============ -->
-  <section class="adv" id="adv">
-    <div class="adv-label">O CHOQUE DA REELEIÇÃO</div>
-    <div class="adv-main">
-      <div class="adv-pp num" id="advNum">—</div>
-      <div class="adv-who" id="advWho">carregando…</div>
+    <section class="adv">
+      <div class="adv-label">O CHOQUE DA REELEIÇÃO</div>
+      <div class="adv-main">
+        <div class="adv-pp num" id="advNum">—</div>
+        <div class="adv-who" id="advWho">carregando…</div>
+      </div>
+      <div class="adv-votes">
+        <b>Lula reeleito</b> com 51,79% dos válidos (64,2 mi) × Flávio 48,21% (59,8 mi) — anunciado às <b>21h08 de 25/10</b> pelo TSE. O resultado contrariou o mercado, que precificava vitória de Flávio após o 1º turno.
+      </div>
+    </section>
+
+    <div class="card" id="waiting" style="text-align:center">
+      <div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut-2);font-weight:800" id="waitTit">B3 abre às 10h</div>
+      <div style="font-size:11.5px;color:var(--mut);margin-top:8px;line-height:1.5" id="waitTxt">NY e CME já estão ao vivo — o Ibovespa entra no pregão às 10h de Brasília.</div>
     </div>
-    <div class="adv-votes" id="advTxt">
-      <b>Lula reeleito</b> com 51,79% dos válidos (64,2 mi de votos) × Flávio 48,21% (59,8 mi) — resultado anunciado às <b>21h08 de ontem</b> pelo TSE. O resultado contrariou o mercado, que precificava vitória de Flávio após o 1º turno: bolsa despenca em NY, dólar futuro dispara e o foco agora é a equipe econômica e o Congresso.
+
+    <section class="sec">
+      <div class="sec-h">
+        <h2>Ativos em tempo real</h2>
+        <span id="updAt">—</span>
+      </div>
+      <div class="sort">
+        <button type="button" data-sort="mov" aria-pressed="true">Maior movimento</button>
+        <button type="button" data-sort="az" aria-pressed="false">A–Z</button>
+      </div>
+      <ul id="ativos"></ul>
+    </section>
+  </section>
+
+  <!-- ================= ABA 2: SELIC & IPCA ================= -->
+  <section class="aba" id="aba-juros" role="tabpanel">
+    <div class="adv" style="margin-top:14px">
+      <div class="adv-label">O CUSTO DO DINHEIRO NO BRASIL</div>
+      <div class="adv-main">
+        <div class="adv-pp num" id="selicBig">—</div>
+        <div class="adv-who">Selic ao ano</div>
+      </div>
+      <div class="adv-votes">
+        Juro real de <b id="realBig">—</b> ao ano — é o piso de todo crédito no país. Nenhum banco empresta abaixo disso; ele ainda soma o risco por cima.
+      </div>
+    </div>
+
+    <div id="indLista"></div>
+
+    <div class="card">
+      <div class="sec-h" style="margin-bottom:6px"><h2>O que isso muda na venda</h2></div>
+      <div class="ind-sub" style="margin-top:4px" id="txtVenda">
+        Selic e IPCA são a origem do preço do financiamento.
+      </div>
+    </div>
+    <div class="aviso">
+      <b>Fontes:</b> Selic e IPCA da API SGS do Banco Central do Brasil. Taxa de financiamento de veículo: taxa média mensal ponderada das novas operações de crédito livre para pessoa física — aquisição de veículos (BCB). Os dados de crédito saem com defasagem de ~2 meses: confira a data de referência em cada cartão.
     </div>
   </section>
 
-  <!-- ============ AGUARDANDO B3 ============ -->
-  <div id="waiting">
-    <div class="dots"><i></i><i></i><i></i></div>
-    <h2>B3 ABRE ÀS 10H</h2>
-    <p>NY e CME já estão ao vivo — o Ibovespa entra no pregão às 10h de Brasília.</p>
-  </div>
+  <!-- ================= ABA 3: VENDA ================= -->
+  <section class="aba" id="aba-venda" role="tabpanel">
+    <div class="card" style="margin-top:14px">
+      <div class="sec-h" style="margin-bottom:0"><h2>Consórcio × Financiamento</h2></div>
+      <div class="ind-sub" style="margin-top:8px">
+        Escolha o valor do veículo. O financiamento usa a taxa média real que os bancos cobram hoje para veículo. O consórcio usa a tabela DISAL vigente — sem juro, só a taxa de administração diluída.
+      </div>
 
-  <!-- ============ GRID DE ATIVOS ============ -->
-  <section class="sec">
-    <div class="sec-h">
-      <h2>Ativos em tempo real</h2>
-      <span id="updAt">—</span>
+      <div class="valor-destaque">
+        <div class="k">Valor do veículo</div>
+        <div class="v num" id="valorEsc">R$ 120.000</div>
+      </div>
+
+      <div class="slider-box">
+        <input type="range" id="range" min="90000" max="380000" step="5000" value="120000" aria-label="Valor do veículo">
+        <div class="escolhas" id="presets"></div>
+      </div>
+
+      <div class="vs">
+        <div class="vs-col ruim">
+          <div class="vs-t">Financiamento</div>
+          <div class="vs-v num" id="parcFin">—</div>
+          <div class="vs-d" id="finDetalhe">—</div>
+        </div>
+        <div class="vs-col bom">
+          <div class="vs-t">Consórcio</div>
+          <div class="vs-v num" id="parcCons">—</div>
+          <div class="vs-d" id="consDetalhe">—</div>
+        </div>
+      </div>
+
+      <div class="economia">
+        <div class="k">Diferença na parcela</div>
+        <div class="v num" id="economiaV">—</div>
+        <div class="d" id="economiaD">por mês, comparando os dois</div>
+      </div>
+
+      <div class="tab-detalhe">
+        <div class="linha"><span>Prazo do financiamento</span><b id="lPrazoFin">—</b></div>
+        <div class="linha"><span>Prazo do consórcio</span><b id="lPrazoCons">—</b></div>
+        <div class="linha"><span>Total pago no financiamento</span><b id="lTotalFin">—</b></div>
+        <div class="linha"><span>Total pago no consórcio</span><b id="lTotalCons">—</b></div>
+        <div class="linha"><span>Taxa usada no financiamento</span><b id="lTaxaFin">—</b></div>
+      </div>
+
+      <div class="aviso" style="margin-top:14px">
+        <b>Simulação — não é proposta.</b> A parcela do consórcio é a de até a contemplação (tabela DISAL Base 75% Light, com seguro, set/2026; taxa do boletim 14,5% a 16%). O consórcio não tem garantia de contemplação: ela acontece por sorteio ou por lance. No financiamento o bem é seu desde a assinatura, mas o juro corre desde o primeiro dia. Valores sujeitos a alteração do boletim.
+      </div>
     </div>
-    <div class="sort">
-      <button type="button" data-sort="mov" aria-pressed="true">Maior movimento</button>
-      <button type="button" data-sort="az" aria-pressed="false">A–Z</button>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Argumentos prontos para enviar</h2><span>toque para copiar</span></div>
+      <div id="args"></div>
     </div>
-    <ul id="ativos"></ul>
   </section>
 
-  <!-- ============ CONTEXTO DA ELEIÇÃO ============ -->
-  <section class="totals" aria-label="Contexto da eleição">
-    <h2>Contexto da eleição</h2>
-    <div class="t-grid">
-      <div class="t-cell"><div class="k">Lula (PT)</div><div class="v num">64.256.232</div><div class="d num">51,79% dos válidos</div></div>
-      <div class="t-cell"><div class="k">Flávio Bolsonaro (PL)</div><div class="v num">59.826.041</div><div class="d num">48,21% dos válidos</div></div>
-      <div class="t-cell"><div class="k">Anunciado</div><div class="v num">21h08</div><div class="d num">domingo 25/10 · TSE</div></div>
-      <div class="t-cell"><div class="k">Margem</div><div class="v num">4.430.191</div><div class="d num">3,58 p.p. de vantagem</div></div>
+  <!-- ================= ABA 4: ELEIÇÃO ================= -->
+  <section class="aba" id="aba-eleicao" role="tabpanel">
+    <section class="totals" style="margin-top:14px" aria-label="Resultado da eleição">
+      <h2>Resultado — 2º turno 2026</h2>
+      <div class="t-grid">
+        <div class="t-cell"><div class="k">Lula (PT)</div><div class="v num">64.256.232</div><div class="d num">51,79% dos válidos</div></div>
+        <div class="t-cell"><div class="k">Flávio Bolsonaro (PL)</div><div class="v num">59.826.041</div><div class="d num">48,21% dos válidos</div></div>
+        <div class="t-cell"><div class="k">Anunciado</div><div class="v num">21h08</div><div class="d num">domingo 25/10 · TSE</div></div>
+        <div class="t-cell"><div class="k">Margem</div><div class="v num">4.430.191</div><div class="d num">3,58 p.p. de vantagem</div></div>
+      </div>
+    </section>
+    <div class="card">
+      <div class="sec-h" style="margin-bottom:6px"><h2>O que o mercado disse</h2></div>
+      <div class="ind-sub" style="margin-top:4px">
+        O mercado apostava em vitória de Flávio depois do 1º turno — o Ibovespa subiu 7,7% no primeiro pregão pós-1º turno e o dólar caiu a R$5,00. Com a virada de Lula, a reação foi imediata no exterior: o EWZ (ETF do Ibovespa em NY) despencou no pré-mercado e o dólar futuro saltou na CME.
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-h" style="margin-bottom:6px"><h2>Por que isso importa na sua venda</h2></div>
+      <div class="ind-sub" style="margin-top:4px">
+        Dólar alto e bolsa em queda aumentam a incerteza — e incerteza encarece o crédito: o banco cobra mais para emprestar. Se a taxa de financiamento subir, o consórcio fica <b>relativamente mais barato</b>, e a parcela de financiamento que o cliente viu há dois meses já não existe mais. É o momento de puxar a comparação com número atualizado.
+      </div>
     </div>
   </section>
 
-  <!-- ============ NOTÍCIAS ============ -->
   <section id="news" hidden>
     <div class="nw-head">
       <h2>Notícias — Brasil &amp; Mundo</h2>
@@ -362,8 +498,8 @@
   </section>
 
   <footer>
-    <div class="f1">Fonte: Yahoo Finance (via servidor) · cotações a cada 5 min<br>Notícias: RSS Brasil/Mundo · a cada 30 min</div>
-    <div class="f2">Página independente · não é recomendação de investimento</div>
+    <div class="f1">Fontes: Yahoo Finance · Banco Central (SGS) · TSE · RSS Brasil/Mundo<br>Cotações 5 min · indicadores 30 min · notícias 30 min</div>
+    <div class="f2">Página independente · simulação, não é proposta</div>
     <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
       <defs><linearGradient id="ring2" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stop-color="#FFC24A"/><stop offset="52%" stop-color="#FF7A3D"/><stop offset="100%" stop-color="#E23E7A"/>
@@ -378,6 +514,7 @@
    1. CONFIGURAÇÃO
    ===================================================================== */
 const URL_DADOS = 'mercado.json';
+const URL_IND   = 'indicadores.json';
 const URL_NEWS  = '../marcos/news.json';
 const CB = () => '?t=' + Date.now();
 
@@ -397,28 +534,45 @@ const ATIVOS = {
 };
 const HERO = ['ewz','dolfut','usdbrl','ibov'];
 
+/* Tabelas DISAL — Base 75% Light, com seguro (set/2026).
+   Faixa II: 84 meses, taxa 16%. Faixa III: 100 meses, taxa 14,5%.
+   Crédito -> parcela até a contemplação. Fonte: boletim/conhecimento Marcos. */
+const TAB_II = {90:1071.51,95:1131.04,100:1190.57,105:1250.09,110:1309.62,115:1369.15,
+  120:1428.68,125:1488.21,130:1547.74,135:1607.26,140:1666.79,145:1726.32,150:1785.85,
+  155:1845.38,160:1904.91,165:1964.43,170:2023.96,175:2083.49,180:2143.02};
+const TAB_III = {190:1878.19,195:1927.62,200:1977.05,205:2026.47,210:2075.90,215:2125.33,
+  220:2174.75,225:2224.18,230:2273.60,235:2323.03,240:2372.46,245:2421.88,250:2471.31,
+  255:2520.74,260:2570.16,265:2619.59,270:2669.01,275:2718.44,280:2767.87,285:2817.29,
+  290:2866.72,295:2916.14,300:2965.57,305:3015.00,310:3064.42,315:3113.85,320:3163.28,
+  325:3212.70,330:3262.13,335:3311.55,340:3360.98,345:3410.41,350:3459.83,355:3509.26,
+  360:3558.68,365:3608.11,370:3657.54,375:3706.96,380:3756.39};
+const TAB_II_PRAZO = 84, TAB_III_PRAZO = 100;
+
 /* =====================================================================
    2. ESTADO
    ===================================================================== */
-const S = { dados:null, news:null, offline:false, sort:'mov', busy:false };
+const S = { dados:null, ind:null, news:null, offline:false, sort:'mov', busy:false,
+            valor:120000, taxaFin:26.42, aba:'mercado' };
 
 /* =====================================================================
    3. UTILITÁRIOS
    ===================================================================== */
 const nf0 = new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
 const nf2 = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const nf4 = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4});
+const R$ = v => 'R$ ' + nf2.format(v || 0);
 const $ = id => document.getElementById(id);
 function nfFor(dec){
   if (dec === 0) return nf0;
   if (dec === 2) return nf2;
+  if (dec === 4) return nf4;
   return new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
 }
 function horaBrasilia(){
   try{
     return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date());
   }catch(e){
-    const d = new Date();
-    return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    const d = new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   }
 }
 async function getJSON(url, ms = 12000){
@@ -438,22 +592,16 @@ function idadeTxt(min){
   if (min < 60) return min + ' min';
   return Math.floor(min/60) + 'h' + String(min%60).padStart(2,'0');
 }
-function idadeArquivo(dados){
-  if (!dados || !dados.at) return null;
-  return Math.round((Date.now() - new Date(dados.at).getTime())/60000);
-}
-/* texto da idade no topo: "atualizado agora" / "atualizado 3 min atrás" */
 function idadeTopo(min){
   if (min === null) return '—';
   if (min < 1) return 'atualizado agora';
   return 'atualizado ' + idadeTxt(min) + ' atrás';
 }
-
-/* =====================================================================
-   4. RENDER
-   ===================================================================== */
 function corClasse(c){ return c > 0.05 ? 'up' : (c < -0.05 ? 'down' : 'flat'); }
 
+/* =====================================================================
+   4. ABA MERCADO
+   ===================================================================== */
 function spark(id, serie){
   const el = $(id);
   if (!el || !serie || serie.length < 2) return;
@@ -466,7 +614,6 @@ function spark(id, serie){
   const cor = serie[serie.length-1] < serie[0] ? 'down' : 'up';
   el.innerHTML = '<polyline class="'+cor+'" points="'+pts+'"/>';
 }
-
 function heroCard(id){
   const c = ATIVOS[id];
   return '<div class="painel" id="p-'+id+'">'+
@@ -484,43 +631,34 @@ function heroCard(id){
     '<svg class="spark" id="sp-'+id+'" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>'+
   '</div>';
 }
-
 function renderHero(){
   if (!S.dados) return;
-  const itens = S.dados.itens;
-  /* B3 fechada: Ibovespa/PETR/VALE mostram fechamento de sexta (17h) —
-     selo FECHADO em vez de cara de "ao vivo" */
-  const agora = Date.now()/1000;
+  const itens = S.dados.itens, agora = Date.now()/1000;
   for (const id of HERO){
     const it = itens[id], card = $('p-'+id);
+    if (!card) continue;
     if (!it || it.p == null){
-      if (card){
-        card.style.opacity = .45;
-        const t = $('tag-'+id);
-        if (t) t.textContent = 'sem dado ainda';
-      }
+      card.style.opacity = .45;
+      const t = $('tag-'+id); if (t) t.textContent = 'sem dado ainda';
       continue;
     }
     card.style.opacity = 1;
-    const nf = nfFor(ATIVOS[id].dec);
-    $('v-'+id).textContent = nf.format(it.p);
+    $('v-'+id).textContent = nfFor(ATIVOS[id].dec).format(it.p);
     const pct = $('c-'+id);
     pct.textContent = (it.c > 0 ? '+' : '') + nf2.format(it.c) + '%';
     pct.className = 'pct num ' + corClasse(it.c);
     const b = $('b-'+id);
-    const fechado = it.t && (agora - it.t) > 20*3600;   /* >20h = fechamento antigo */
+    const fechado = it.t && (agora - it.t) > 20*3600;
     b.textContent = fechado ? 'FECHADO' : (it.c < -0.05 ? '↓ QUEDA' : (it.c > 0.05 ? '↑ ALTA' : '→ ESTÁVEL'));
     b.className = 'badge ' + (fechado ? '' : (it.c < -0.05 ? 'badge-down' : (it.c > 0.05 ? 'badge-up' : '')));
     $('bar-'+id).style.width = Math.min(100, Math.abs(it.c)*5) + '%';
     card.className = 'painel ' + corClasse(it.c);
     if (it.s && it.s.length > 1) spark('sp-'+id, it.s);
-    const tag = $('tag-'+id);
     const im = idadeMin(it.t);
-    tag.textContent = fechado ? 'fechamento de sexta · reabre 10h'
+    $('tag-'+id).textContent = fechado ? 'fechamento anterior · reabre 10h'
       : ((im !== null && im > 10) ? 'dado de ' + idadeTxt(im) + ' atrás' : 'ao vivo');
   }
 }
-
 function renderLista(){
   if (!S.dados) return;
   const itens = S.dados.itens;
@@ -529,32 +667,25 @@ function renderLista(){
   else arr.sort((a,b) => ATIVOS[a.id].nome.localeCompare(ATIVOS[b.id].nome));
   const agoraTs = Date.now()/1000;
   $('ativos').innerHTML = arr.map(it => {
-    const cfg = ATIVOS[it.id];
-    const sem = it.p == null;
-    const nf = nfFor(cfg.dec);
+    const cfg = ATIVOS[it.id], sem = it.p == null;
     const fechado = it.t && (agoraTs - it.t) > 20*3600;
     const cor = sem ? 'flat' : corClasse(it.c||0);
     const pctTxt = sem ? '—' : (it.c > 0 ? '+' : '') + nf2.format(it.c||0) + '%';
     const im = idadeMin(it.t);
-    const idade = sem ? '' : (fechado ? ' · fechamento de sexta' : ((im !== null && im > 10) ? ' · ' + idadeTxt(im) + ' atrás' : ' · ao vivo'));
+    const idade = sem ? '' : (fechado ? ' · fechado' : ((im !== null && im > 10) ? ' · ' + idadeTxt(im) + ' atrás' : ' · ao vivo'));
     return '<li class="uf">'+
-      '<div class="uf-top">'+
-        '<div class="uf-id">'+
-          '<span class="uf-sigla">'+cfg.avatar+' '+cfg.nome+'</span>'+
-          '<span class="uf-nm">'+cfg.sub+idade+'</span>'+
-        '</div>'+
-        '<span class="uf-pct '+cor+'">'+pctTxt+'</span>'+
-      '</div>'+
+      '<div class="uf-top"><div class="uf-id">'+
+        '<span class="uf-sigla">'+cfg.avatar+' '+cfg.nome+'</span>'+
+        '<span class="uf-nm">'+cfg.sub+idade+'</span></div>'+
+        '<span class="uf-pct '+cor+'">'+pctTxt+'</span></div>'+
       '<div class="uf-row">'+
-        '<div class="mini"><span class="nm">Valor</span>'+
-          '<span class="vv"><span class="v num">'+(sem ? '—' : nf.format(it.p))+'</span></span></div>'+
-        '<div class="mini right"><span class="nm">vs. fechamento</span>'+
-          '<span class="vv"><span class="p num">'+pctTxt+'</span></span></div>'+
-      '</div>'+
-    '</li>';
+        '<div class="mini"><span class="nm">Valor</span><span class="vv"><span class="v num">'+
+          (sem ? '—' : nfFor(cfg.dec).format(it.p))+'</span></span></div>'+
+        '<div class="mini right"><span class="nm">vs. fechamento</span><span class="vv"><span class="p num">'+
+          pctTxt+'</span></span></div>'+
+      '</div></li>';
   }).join('');
 }
-
 function renderAdv(){
   if (!S.dados) return;
   const ewz = S.dados.itens.ewz, dolfut = S.dados.itens.dolfut;
@@ -567,8 +698,232 @@ function renderAdv(){
   }
 }
 
+/* =====================================================================
+   5. ABA JUROS (indicadores do BCB)
+   ===================================================================== */
+function dataBR(d){
+  /* BCB manda dd/mm/yyyy; mostra dd/mm */
+  if (!d) return '—';
+  const p = String(d).split('/');
+  return p.length >= 2 ? p[0] + '/' + p[1] : d;
+}
+function renderJuros(){
+  if (!S.ind || !S.ind.itens) return;
+  const it = S.ind.itens;
+  const selic = it.selic, ipca = it.ipca12, veic = it.juros_veic, real = it.juro_real;
+
+  if (selic) $('selicBig').textContent = nf2.format(selic.v) + '%';
+  if (real) $('realBig').textContent = nf2.format(real.v) + '% a.a.';
+
+  /* ordem de leitura: Selic, juro real, IPCA, financiamento veículo, imobiliário, poupança */
+  const ordem = [
+    ['selic',   'Selic — taxa básica de juros', 'grad',
+      'É o juro que o Banco Central cobra nos empréstimos entre bancos. Serve de piso para todo o crédito do país.'],
+    ['juro_real','Juro real — o que sobra depois da inflação', '',
+      'Quanto o dinheiro rende de verdade: a Selic descontado o IPCA. Juro real alto significa crédito caro e consumo travado.'],
+    ['ipca12',  'IPCA — inflação acumulada em 12 meses', '',
+      'É o índice oficial da inflação. Tudo (aluguel, salário, parcela, crédito) é ajustado por ele.'],
+    ['juros_veic','Juros do financiamento de veículo', 'alerta',
+      'Taxa média que os bancos cobram da pessoa física para comprar veículo com recursos livres. É o número que você compara com a parcela do consórcio.'],
+    ['juros_veic_mes','Juros do veículo — taxa mensal', '',
+      'A mesma taxa média do financiamento de veículo, mas ao mês. É o número que o gerente do banco mostra na mesa; comparar com a parcela do consórcio fica mais direto.'],
+    ['poupanca','Poupança — rendimento no mês', '',
+      'Quanto a poupança rende por mês. Serve de comparação para quem diz que “deixar o dinheiro parado” é vantagem.'],
+    ['selic_dia','Selic acumulada no mês', '',
+      'A taxa básica acumulada no mês corrente, como o mercado acompanha no dia a dia.'],
+  ];
+  let html = '';
+  for (const [id, titulo, cls, desc] of ordem){
+    const v = it[id];
+    if (!v) continue;
+    const val = nfFor(v.dec).format(v.v);
+    html += '<div class="ind">'+
+      '<div class="ind-top"><div>'+
+        '<div class="ind-nome">'+titulo+'</div>'+
+        '<div class="ind-ref">ref. '+dataBR(v.d)+' · '+v.fonte+'</div>'+
+      '</div></div>'+
+      '<div class="ind-val num '+cls+'">'+val+'<small>'+v.suf+'</small></div>'+
+      '<div class="ind-sub">'+desc+'</div>'+
+      (v.h && v.h.length > 2 ? '<svg class="ind-spark" id="sd-'+id+'" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>' : '')+
+    '</div>';
+  }
+  $('indLista').innerHTML = html;
+
+  /* sparkline dos históricos */
+  for (const [id] of ordem){
+    const v = it[id];
+    if (!v || !v.h || v.h.length < 3) continue;
+    const el = $('sd-'+id);
+    if (!el) continue;
+    const serie = v.h.map(x => x.v);
+    const mn = Math.min(...serie), mx = Math.max(...serie), rng = (mx - mn) || 1;
+    const pts = serie.map((val,i) => ((i/(serie.length-1))*100).toFixed(1) + ',' +
+      (28 - ((val-mn)/rng)*26).toFixed(1)).join(' ');
+    el.innerHTML = '<polyline points="'+pts+'"/>';
+  }
+
+  /* texto de venda com os números reais */
+  const txt = [];
+  if (selic) txt.push('Selic em <b>' + nf2.format(selic.v) + '%</b> ao ano');
+  if (ipca) txt.push('inflação de <b>' + nf2.format(ipca.v) + '%</b> em 12 meses');
+  if (veic) {
+    txt.push('banco cobrando <b>' + nf2.format(veic.v) + '%</b> ao ano para financiar veículo');
+    S.taxaFin = veic.v;
+  }
+  if (txt.length){
+    $('txtVenda').innerHTML = txt.join(', ').replace(/,([^,]*)$/, ' e$1') +
+      '. No consórcio <b>não existe juro</b> — só a taxa de administração diluída nas parcelas. É essa diferença que você leva para a mesa.';
+  }
+  renderVenda();
+}
+
+/* =====================================================================
+   6. ABA VENDA — comparador
+   ===================================================================== */
+function parcelaConsorcio(valor){
+  /* acha a faixa e a parcela exata da tabela DISAL; fora da tabela,
+     interpola entre os pontos vizinhos (nunca extrapola) */
+  const usaIII = valor >= 190000;
+  const tab = usaIII ? TAB_III : TAB_II;
+  const prazo = usaIII ? TAB_III_PRAZO : TAB_II_PRAZO;
+  const chaves = Object.keys(tab).map(Number).sort((a,b) => a-b);
+  const min = chaves[0] * 1000, max = chaves[chaves.length-1] * 1000;
+  if (valor < min || valor > max) return null;
+  const k = valor / 1000;
+  if (tab[k] !== undefined) return {parcela: tab[k], prazo, faixa: usaIII ? 'Faixa III' : 'Faixa II'};
+  /* interpolação linear entre vizinhos (valores em degraus de 5k) */
+  let lo = chaves[0], hi = chaves[chaves.length-1];
+  for (let i = 0; i < chaves.length - 1; i++){
+    if (k >= chaves[i] && k <= chaves[i+1]){ lo = chaves[i]; hi = chaves[i+1]; break; }
+  }
+  const t = (k - lo) / (hi - lo);
+  const p = tab[lo] + (tab[hi] - tab[lo]) * t;
+  return {parcela: p, prazo, faixa: usaIII ? 'Faixa III' : 'Faixa II'};
+}
+function parcelaFinanciamento(valor, taxaAnual, meses){
+  /* Tabela Price (parcela fixa) — é como o banco apresenta ao cliente */
+  const i = Math.pow(1 + taxaAnual/100, 1/12) - 1;
+  if (i <= 0) return valor / meses;
+  return valor * i / (1 - Math.pow(1 + i, -meses));
+}
+function renderVenda(){
+  const valor = S.valor;
+  $('valorEsc').textContent = 'R$ ' + nf0.format(valor);
+
+  const cons = parcelaConsorcio(valor);
+  const PRAZO_FIN = 60;   /* prazo usual de CDC de veículo */
+  const fin = parcelaFinanciamento(valor, S.taxaFin, PRAZO_FIN);
+
+  if (cons){
+    $('parcCons').textContent = R$(cons.parcela);
+    $('consDetalhe').textContent = cons.prazo + ' meses · ' + cons.faixa;
+    $('lPrazoCons').textContent = cons.prazo + ' meses';
+    $('lTotalCons').textContent = R$(cons.parcela * cons.prazo);
+  } else {
+    $('parcCons').textContent = '—';
+    $('consDetalhe').textContent = 'fora da faixa da tabela';
+    $('lPrazoCons').textContent = '—';
+    $('lTotalCons').textContent = '—';
+  }
+  $('parcFin').textContent = R$(fin);
+  $('finDetalhe').textContent = PRAZO_FIN + ' meses · ' + nf2.format(S.taxaFin) + '% a.a.';
+  $('lPrazoFin').textContent = PRAZO_FIN + ' meses';
+  $('lTotalFin').textContent = R$(fin * PRAZO_FIN);
+  $('lTaxaFin').textContent = nf2.format(S.taxaFin) + '% a.a. (média BCB)';
+
+  if (cons){
+    const dif = fin - cons.parcela;
+    $('economiaV').textContent = R$(Math.abs(dif));
+    $('economiaD').textContent = dif > 0
+      ? 'a menos por mês no consórcio'
+      : 'a menos por mês no financiamento';
+    $('economiaV').style.color = dif > 0 ? 'var(--verde)' : 'var(--vermelho)';
+  } else {
+    $('economiaV').textContent = '—';
+    $('economiaD').textContent = 'escolha um valor dentro da tabela';
+  }
+  renderArgs(fin, cons);
+}
+
+/* =====================================================================
+   7. ARGUMENTOS PRONTOS (copiar e enviar no WhatsApp)
+   ===================================================================== */
+function renderArgs(fin, cons){
+  if (!cons) { $('args').innerHTML = '<div class="aviso">Escolha um valor dentro da faixa da tabela para gerar os argumentos.</div>'; return; }
+  const valor = S.valor;
+  const dif = fin - cons.parcela;
+  const totalFin = fin * 60, totalCons = cons.parcela * cons.prazo;
+  const sobra = totalFin - totalCons;
+  const vf = 'R$ ' + nf0.format(valor);
+
+  const lista = [
+    'Oi! Fiz a comparação com os juros de hoje: um carro de ' + vf + ' financiado em 60 meses fica ' +
+      R$(fin) + ' por mês (' + nf2.format(S.taxaFin) + '% ao ano, média dos bancos). ' +
+      'No consórcio a parcela é ' + R$(cons.parcela) + '. São ' + R$(Math.abs(dif)) +
+      ' de diferença por mês. Quer que eu simule com o seu valor?',
+
+    'Fiz as contas do seu caso: no financiamento você paga ' + R$(totalFin) + ' no total. ' +
+      'No consórcio, ' + R$(totalCons) + '. A diferença é de ' + R$(Math.abs(sobra)) +
+      ' — dá quase um carro zero de entrada. Posso te mostrar as duas simulações?',
+
+    'A Selic está em ' + (S.ind && S.ind.itens.selic ? nf2.format(S.ind.itens.selic.v) : '—') +
+      '% e o banco cobra ' + nf2.format(S.taxaFin) + '% ao ano pra financiar veículo. ' +
+      'No consórcio não tem juro: a parcela de um crédito de ' + vf + ' fica em ' + R$(cons.parcela) +
+      '. Quer ver como funciona a contemplação por lance?',
+  ];
+  $('args').innerHTML = lista.map((t,i) =>
+    '<div class="arg"><p>'+t+'</p>'+
+    '<button class="copiar" data-txt="'+String(t).replace(/"/g,'&quot;')+'">Copiar mensagem</button></div>'
+  ).join('');
+  document.querySelectorAll('.arg .copiar').forEach(b => {
+    b.addEventListener('click', async () => {
+      const txt = b.getAttribute('data-txt');
+      try{
+        await navigator.clipboard.writeText(txt);
+      }catch(e){
+        const ta = document.createElement('textarea');
+        ta.value = txt; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+      }
+      const orig = b.textContent;
+      b.textContent = 'Copiado ✓'; b.classList.add('ok');
+      setTimeout(() => { b.textContent = orig; b.classList.remove('ok'); }, 1600);
+    });
+  });
+}
+
+/* =====================================================================
+   8. ABAS
+   ===================================================================== */
+function abrirAba(nome){
+  S.aba = nome;
+  document.querySelectorAll('nav#tabs button').forEach(b => {
+    b.setAttribute('aria-selected', b.dataset.aba === nome ? 'true' : 'false');
+  });
+  document.querySelectorAll('.aba').forEach(s => {
+    s.classList.toggle('on', s.id === 'aba-' + nome);
+  });
+  $('news').hidden = nome !== 'mercado';
+  $('brandSub').textContent =
+    nome === 'mercado' ? 'Bolsa, dólar e notícias ao vivo' :
+    nome === 'juros' ? 'Selic, IPCA e juros de financiamento' :
+    nome === 'venda' ? 'Comparador para fechar negócio' :
+    'Contexto político do mercado';
+  try { localStorage.setItem('mercado_aba', nome); } catch(e){}
+  window.scrollTo({top:0, behavior:'smooth'});
+  if (nome === 'venda') renderVenda();
+  if (nome === 'juros') renderJuros();
+}
+document.querySelectorAll('nav#tabs button').forEach(b => {
+  b.addEventListener('click', () => abrirAba(b.dataset.aba));
+});
+
+/* =====================================================================
+   9. NOTÍCIAS
+   ===================================================================== */
 function renderNews(){
   if (!S.news || !S.news.items || !S.news.items.length){ $('news').hidden = true; return; }
+  if (S.aba !== 'mercado'){ $('news').hidden = true; return; }
   $('news').hidden = false;
   const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const its = S.news.items.slice(0, 24);
@@ -584,24 +939,8 @@ function renderNews(){
   $('nwAt').textContent = 'atualizado ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
 
-function renderIdade(){
-  const im = idadeArquivo(S.dados);
-  const el = $('ageData');
-  if (im !== null){
-    el.textContent = idadeTopo(im);
-    el.style.color = im > 30 ? '#FF4757' : (im > 15 ? '#FF7A3D' : '');
-  }
-  $('clock').textContent = horaBrasilia();
-}
-
-function setOffline(on){
-  S.offline = on;
-  $('offline').classList.toggle('on', on);
-  $('live').classList.toggle('off', on);
-}
-
 /* =====================================================================
-   5. POLLING — mercado.json 60s (servidor renova 5 min) · news 5 min
+   10. POLLING
    ===================================================================== */
 async function pollDados(){
   if (S.busy) return;
@@ -609,23 +948,44 @@ async function pollDados(){
   try{
     const d = await getJSON(URL_DADOS + CB());
     if (d && d.itens){
-      S.dados = d;
-      S.offline = false;
-      setOffline(false);
+      S.dados = d; S.offline = false; setOffline(false);
       renderHero(); renderLista(); renderAdv(); renderIdade();
     }
   }catch(e){ setOffline(true); }
   S.busy = false;
 }
+async function pollInd(){
+  try{
+    const d = await getJSON(URL_IND + CB());
+    if (d && d.itens){
+      S.ind = d;
+      if (d.itens.juros_veic) S.taxaFin = d.itens.juros_veic.v;
+      renderJuros();
+    }
+  }catch(e){}
+}
 async function pollNews(){
   try{
     const d = await getJSON(URL_NEWS + CB());
     if (d && d.items){ S.news = d; renderNews(); }
-  }catch(e){ /* faixa simplesmente não aparece */ }
+  }catch(e){}
+}
+function renderIdade(){
+  const im = (S.dados && S.dados.at)
+    ? Math.round((Date.now() - new Date(S.dados.at).getTime())/60000) : null;
+  const el = $('ageData');
+  if (el && im !== null) el.textContent = idadeTopo(im);
+  const clock = $('clock');
+  if (clock) clock.textContent = horaBrasilia();
+}
+function setOffline(on){
+  S.offline = on;
+  $('offline').classList.toggle('on', on);
+  $('live').classList.toggle('off', on);
 }
 
 /* =====================================================================
-   6. SORT + BOOT
+   11. BOOT
    ===================================================================== */
 document.querySelectorAll('.sort button').forEach(b => {
   b.addEventListener('click', () => {
@@ -636,17 +996,48 @@ document.querySelectorAll('.sort button').forEach(b => {
   });
 });
 
+/* presets do simulador */
+const PRESETS = [90000, 120000, 150000, 200000, 250000, 300000, 380000];
+$('presets').innerHTML = PRESETS.map(v =>
+  '<button type="button" data-v="'+v+'">R$ '+nf0.format(v/1000)+' mil</button>').join('');
+document.querySelectorAll('#presets button').forEach(b => {
+  b.addEventListener('click', () => {
+    S.valor = parseInt(b.dataset.v, 10);
+    $('range').value = S.valor;
+    marcarPreset();
+    renderVenda();
+  });
+});
+function marcarPreset(){
+  document.querySelectorAll('#presets button').forEach(b => {
+    b.setAttribute('aria-pressed', parseInt(b.dataset.v,10) === S.valor ? 'true' : 'false');
+  });
+}
+$('range').addEventListener('input', e => {
+  S.valor = parseInt(e.target.value, 10);
+  marcarPreset();
+  renderVenda();
+});
+
 (async function boot(){
   $('hero').innerHTML = HERO.map(heroCard).join('');
-  /* PWA: service worker (Android/Chrome; iOS instala pelo Compartilhar > Add to Home) */
-  if ('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
-  }
+  marcarPreset();
+  renderVenda();          /* já desenha com a taxa default até o BCB responder */
   renderIdade();
   setInterval(renderIdade, 30000);
+
+  /* aba salva */
+  let aba = 'mercado';
+  try { aba = localStorage.getItem('mercado_aba') || 'mercado'; } catch(e){}
+  abrirAba(['mercado','juros','venda','eleicao'].includes(aba) ? aba : 'mercado');
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
   await pollDados();
+  pollInd();
   pollNews();
   setInterval(pollDados, 60000);
+  setInterval(pollInd, 1800000);
   setInterval(pollNews, 300000);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden){ pollDados(); pollNews(); }
